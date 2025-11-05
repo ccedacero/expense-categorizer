@@ -5,7 +5,8 @@ import UploadZone from '@/components/upload-zone';
 import ResultsTable from '@/components/results-table';
 import CategoryChart from '@/components/category-chart';
 import ExportButtons from '@/components/export-buttons';
-import { CategorizationResult } from '@/lib/types';
+import { CategorizationResult, Category } from '@/lib/types';
+import { calculateSummary } from '@/lib/categorizer-improved';
 
 export default function Home() {
   const [result, setResult] = useState<CategorizationResult | null>(null);
@@ -67,6 +68,33 @@ export default function Home() {
     setError(null);
     setErrorSuggestion(null);
     setTransactionCount(0);
+  };
+
+  const handleCategoryChange = (index: number, newCategory: Category) => {
+    if (!result) return;
+
+    // Update the transaction category
+    const updatedTransactions = [...result.transactions];
+    updatedTransactions[index] = {
+      ...updatedTransactions[index],
+      category: newCategory,
+    };
+
+    // Recalculate summary with new categories
+    const updatedSummary = calculateSummary(updatedTransactions);
+
+    // Recalculate totals
+    const totalExpenses = updatedTransactions
+      .filter(t => t.amount < 0 && t.category !== 'Payment' && t.category !== 'Transfer')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    // Update result state
+    setResult({
+      ...result,
+      transactions: updatedTransactions,
+      summary: updatedSummary,
+      totalExpenses,
+    });
   };
 
   return (
@@ -210,7 +238,10 @@ export default function Home() {
             <ExportButtons transactions={result.transactions} />
 
             {/* Results Table */}
-            <ResultsTable transactions={result.transactions} />
+            <ResultsTable
+              transactions={result.transactions}
+              onCategoryChange={handleCategoryChange}
+            />
           </div>
         )}
       </main>

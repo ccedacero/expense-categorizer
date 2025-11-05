@@ -517,7 +517,7 @@ function expertCategorize(t: Transaction): Category {
   return 'Other';
 }
 
-function calculateSummary(transactions: CategorizedTransaction[]): CategorySummary[] {
+export function calculateSummary(transactions: CategorizedTransaction[]): CategorySummary[] {
   const categoryTotals: Map<Category, { total: number; count: number }> = new Map();
 
   // Only count actual spending (negative amounts, excluding payments)
