@@ -6,7 +6,7 @@ import ResultsTable from '@/components/results-table';
 import CategoryChart from '@/components/category-chart';
 import ExportButtons from '@/components/export-buttons';
 import { CategorizationResult, Category } from '@/lib/types';
-import { calculateSummary } from '@/lib/categorizer-improved';
+import { calculateSummary } from '@/lib/summary';
 
 export default function Home() {
   const [result, setResult] = useState<CategorizationResult | null>(null);
