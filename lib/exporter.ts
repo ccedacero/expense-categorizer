@@ -8,6 +8,7 @@ import { CategorizedTransaction } from './types';
 
 /**
  * Convert transactions to CSV string
+ * Handles split transactions by creating separate rows for each split
  */
 export function exportToCSV(transactions: CategorizedTransaction[]): string {
   if (transactions.length === 0) {
@@ -15,17 +16,33 @@ export function exportToCSV(transactions: CategorizedTransaction[]): string {
   }
 
   // CSV header
-  const header = 'Date,Description,Amount,Category,Confidence\n';
+  const header = 'Date,Description,Amount,Category,Confidence,IsSplit\n';
 
-  // CSV rows
-  const rows = transactions
-    .map(t => {
-      const confidence = t.confidence ? (t.confidence * 100).toFixed(0) + '%' : 'N/A';
-      return `${t.date},"${escapeCsvValue(t.description)}",${t.amount},${t.category},${confidence}`;
-    })
-    .join('\n');
+  // CSV rows - expand split transactions into multiple rows
+  const rows: string[] = [];
 
-  return header + rows;
+  for (const t of transactions) {
+    const confidence = t.confidence ? (t.confidence * 100).toFixed(0) + '%' : 'N/A';
+
+    if (t.isSplit && t.splits && t.splits.length > 0) {
+      // Create a row for each split
+      for (const split of t.splits) {
+        const splitDesc = split.description
+          ? `${t.description} - ${split.description}`
+          : t.description;
+        rows.push(
+          `${t.date},"${escapeCsvValue(splitDesc)}",${split.amount},${split.category},${confidence},Yes`
+        );
+      }
+    } else {
+      // Regular transaction (not split)
+      rows.push(
+        `${t.date},"${escapeCsvValue(t.description)}",${t.amount},${t.category},${confidence},No`
+      );
+    }
+  }
+
+  return header + rows.join('\n');
 }
 
 /**

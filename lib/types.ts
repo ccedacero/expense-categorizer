@@ -27,9 +27,17 @@ export interface Transaction {
   type?: string;  // Transaction type from bank CSV (e.g., "Sale", "Payment")
 }
 
+export interface SplitItem {
+  amount: number;
+  category: Category;
+  description?: string; // Optional description for the split
+}
+
 export interface CategorizedTransaction extends Transaction {
   category: Category;
   confidence?: number; // 0-1 score from AI
+  splits?: SplitItem[]; // Optional: if transaction is split across multiple categories
+  isSplit?: boolean; // Flag to indicate this is a split transaction
 }
 
 export interface CategorySummary {
@@ -52,6 +60,7 @@ export interface CategorizationResult {
   totalExpenses: number;
   totalIncome: number;
   cacheStats?: CacheStats; // For monitoring cost savings
+  recurring?: any; // Recurring transaction analysis (imported from recurring-detector)
 }
 
 export interface ParseResult {
