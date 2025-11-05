@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseTransactions } from '@/lib/parser';
 import { categorizeTransactions } from '@/lib/categorizer-improved'; // Using Claude AI with EXPERT rules 🚀
+import { detectRecurringTransactions } from '@/lib/recurring-detector';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import {
   trackAPICost,
@@ -116,6 +117,9 @@ export async function POST(request: NextRequest) {
     const aiTime = Date.now() - aiStartTime;
     const totalTime = Date.now() - startTime;
 
+    // Step 3: Detect recurring transactions & subscriptions
+    const recurringAnalysis = detectRecurringTransactions(result.transactions);
+
     // Track performance metrics
     trackPerformanceBreakdown(parseTime, aiTime, totalTime);
 
@@ -134,6 +138,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         ...result,
+        recurring: recurringAnalysis, // Add recurring transaction analysis
         parseErrors: parseResult.errors, // Include any parse warnings
       },
       {

@@ -1,30 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { CategorizedTransaction } from '@/lib/types';
-import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/constants';
+import { CategorizedTransaction, Category } from '@/lib/types';
+import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from '@/lib/constants';
 
 interface ResultsTableProps {
   transactions: CategorizedTransaction[];
+  onCategoryChange?: (index: number, newCategory: Category) => void;
 }
 
-export default function ResultsTable({ transactions }: ResultsTableProps) {
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<number>>(new Set());
+export default function ResultsTable({ transactions, onCategoryChange }: ResultsTableProps) {
+  const [editedTransactions, setEditedTransactions] = useState<Set<number>>(new Set());
 
-  const handleFeedback = (index: number, transaction: CategorizedTransaction) => {
-    // In production, send to analytics or backend (without PII)
-    console.log('Feedback received:', {
-      // Don't log actual description (may contain sensitive info)
-      category: transaction.category,
-      confidence: transaction.confidence,
-      timestamp: new Date().toISOString(),
-    });
+  const handleCategoryChange = (index: number, newCategory: Category) => {
+    // Mark as edited
+    setEditedTransactions(new Set(editedTransactions).add(index));
 
-    // Mark as submitted
-    setFeedbackSubmitted(new Set(feedbackSubmitted).add(index));
-
-    // Show user confirmation
-    alert('Thank you for your feedback! This helps improve our AI categorization.');
+    // Notify parent component
+    if (onCategoryChange) {
+      onCategoryChange(index, newCategory);
+    }
   };
   return (
     <div className="w-full overflow-x-auto bg-white rounded-xl shadow-lg">
@@ -44,7 +39,7 @@ export default function ResultsTable({ transactions }: ResultsTableProps) {
               Category
             </th>
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Feedback
+              Confidence
             </th>
           </tr>
         </thead>
@@ -67,27 +62,51 @@ export default function ResultsTable({ transactions }: ResultsTableProps) {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <span
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-white font-medium"
-                  style={{
-                    backgroundColor: CATEGORY_COLORS[transaction.category],
-                  }}
-                >
-                  <span>{CATEGORY_ICONS[transaction.category]}</span>
-                  {transaction.category}
-                </span>
+                <div className="relative inline-block">
+                  <select
+                    value={transaction.category}
+                    onChange={(e) => handleCategoryChange(index, e.target.value as Category)}
+                    className="appearance-none cursor-pointer px-3 py-1 pr-8 rounded-full text-white font-medium border-2 border-transparent hover:border-white/30 focus:border-white/50 focus:outline-none transition-all"
+                    style={{
+                      backgroundColor: CATEGORY_COLORS[transaction.category],
+                    }}
+                    title="Click to change category"
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat} className="bg-gray-800 text-white">
+                        {CATEGORY_ICONS[cat]} {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white text-xs">
+                    ▼
+                  </div>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {CATEGORY_ICONS[transaction.category]}
+                  </span>
+                </div>
+                {editedTransactions.has(index) && (
+                  <span className="ml-2 text-xs text-blue-600 font-semibold">
+                    ✓ Edited
+                  </span>
+                )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                {feedbackSubmitted.has(index) ? (
-                  <span className="text-green-600 text-xs">✓ Thanks!</span>
-                ) : (
-                  <button
-                    onClick={() => handleFeedback(index, transaction)}
-                    className="text-gray-400 hover:text-blue-600 transition-colors text-xs"
-                    title="Report incorrect category"
+                {transaction.confidence ? (
+                  <span
+                    className={`text-xs ${
+                      transaction.confidence >= 0.9
+                        ? 'text-green-600'
+                        : transaction.confidence >= 0.7
+                        ? 'text-yellow-600'
+                        : 'text-orange-600'
+                    }`}
+                    title="AI confidence score"
                   >
-                    Wrong?
-                  </button>
+                    {(transaction.confidence * 100).toFixed(0)}%
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">-</span>
                 )}
               </td>
             </tr>
