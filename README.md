@@ -23,6 +23,9 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 - 🎯 **95%+ Accuracy**: Leverages existing bank categories + custom rules
 - 📊 **14 Categories**: Food & Dining, Transportation, Shopping, Healthcare, and more
 - 🔄 **Handles Edge Cases**: Correctly identifies payments, refunds, and transfers
+- ✏️ **Manual Editing**: Click any category to correct it — updates instantly
+- 🔄 **Recurring Detection**: Automatically finds subscriptions and recurring expenses
+- ✂️ **Split Transactions**: Divide transactions across multiple categories (backend support)
 
 ### Cost-Optimized
 - ⚡ **50-80% Cost Reduction**: Intelligent merchant caching
