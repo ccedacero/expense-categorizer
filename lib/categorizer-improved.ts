@@ -10,6 +10,7 @@ import { Transaction, CategorizedTransaction, Category, CategorizationResult, Ca
 import { CATEGORIES } from './constants';
 import { getCachedCategory, cacheMerchant, getCacheStats } from './merchant-cache';
 import { mapChaseCategory } from './chase-category-mapping';
+import { mapCapitalOneCategory } from './capital-one-category-mapping';
 import { calculateSummary } from './summary';
 
 const anthropic = new Anthropic({
@@ -203,21 +204,31 @@ Format: ["Category", "Category", ...]`;
  * SMART CATEGORIZATION with Priority Logic
  *
  * Priority Order:
- * 1. If Type == "Payment" → "Payment"
- * 2. If originalCategory exists (from Chase CSV) → Map and use it
+ * 1. If Type == "Payment" OR originalCategory == "Payment/Credit" → "Payment"
+ * 2. If originalCategory exists (from Chase/Capital One CSV) → Map and use it
  * 3. If refund (Amount > 0 and Type != "Payment") → Try originalCategory or keyword match
  * 4. Fall back to expert rules
  * 5. Default to "Other"
  */
 function smartCategorize(t: Transaction): Category {
-  // PRIORITY 1: Handle Payments (Type == "Payment")
+  // PRIORITY 1: Handle Payments (Type == "Payment" OR Category == "Payment/Credit")
   if (t.type && t.type.toLowerCase() === 'payment') {
     return 'Payment';
   }
+  if (t.originalCategory && t.originalCategory.toLowerCase().includes('payment')) {
+    return 'Payment';
+  }
 
-  // PRIORITY 2: Use existing category from CSV (e.g., Chase Category column)
+  // PRIORITY 2: Use existing category from CSV (Chase or Capital One)
   if (t.originalCategory) {
-    const mappedCategory = mapChaseCategory(t.originalCategory);
+    // Try Chase mapping first
+    let mappedCategory = mapChaseCategory(t.originalCategory);
+    if (mappedCategory) {
+      return mappedCategory;
+    }
+
+    // Try Capital One mapping (with merchant-specific logic)
+    mappedCategory = mapCapitalOneCategory(t.originalCategory, t.description);
     if (mappedCategory) {
       return mappedCategory;
     }
@@ -227,7 +238,10 @@ function smartCategorize(t: Transaction): Category {
   if (t.amount > 0) {
     // Try to use original category for refunds
     if (t.originalCategory) {
-      const mappedCategory = mapChaseCategory(t.originalCategory);
+      let mappedCategory = mapChaseCategory(t.originalCategory);
+      if (!mappedCategory) {
+        mappedCategory = mapCapitalOneCategory(t.originalCategory, t.description);
+      }
       if (mappedCategory) {
         return mappedCategory;
       }
@@ -266,7 +280,12 @@ function expertCategorize(t: Transaction): Category {
     desc.includes('automatic payment') ||
     desc.includes('online payment') ||
     desc.includes('mobile payment') ||
-    desc.includes('credit card payment')
+    desc.includes('credit card payment') ||
+    desc.includes('autopay') ||
+    // Capital One specific patterns
+    desc.includes('capital one mobile pymt') ||
+    desc.includes('capital one online pymt') ||
+    desc.includes('capital one autopay')
   )) {
     return 'Payment';
   }
