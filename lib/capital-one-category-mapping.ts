@@ -69,7 +69,9 @@ export const CAPITAL_ONE_CATEGORY_MAP: Record<string, Category> = {
   'Fee/Interest Charge': 'Other',
 
   // Services
-  'Professional Services': 'Other',  // Too broad - let AI categorize
+  // NOTE: "Professional Services" is TOO BROAD in Capital One's system
+  // It includes: mortgages, contractors, sewer, tax software, etc.
+  // We intentionally DON'T map it here - let expert rules handle it
   'Other Services': 'Other',
   'Services': 'Other',
 

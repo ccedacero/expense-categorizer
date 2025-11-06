@@ -123,6 +123,9 @@ const EXCLUDED_MERCHANT_PATTERNS = [
   /market\s*(?:32|\d+)/i,
   /c\s*town/i,
 
+  // Payment Processors & Terminals (one-time purchases, not subscriptions)
+  /^sq\s+/i,  // Square payment terminal (e.g., "SQ ACME COFFEE" is a purchase, not a subscription)
+
   // Generic Payments & Transfers
   /payment\s*thank\s*you/i,
   /automatic\s*payment/i,

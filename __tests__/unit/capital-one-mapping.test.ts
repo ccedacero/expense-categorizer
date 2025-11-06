@@ -74,7 +74,10 @@ describe('mapCapitalOneCategory', () => {
     expect(mapCapitalOneCategory('Entertainment')).toBe('Entertainment');
     expect(mapCapitalOneCategory('Education')).toBe('Education');
     expect(mapCapitalOneCategory('Other')).toBe('Other');
-    expect(mapCapitalOneCategory('Professional Services')).toBe('Other');
+    // NOTE: "Professional Services" is intentionally NOT mapped (too broad)
+    // It includes mortgages, contractors, sewer, tax software, etc.
+    // Expert rules will handle categorization based on merchant name
+    expect(mapCapitalOneCategory('Professional Services')).toBe(null);
     expect(mapCapitalOneCategory('Other Services')).toBe('Other');
     expect(mapCapitalOneCategory('Fee/Interest Charge')).toBe('Other');
   });
