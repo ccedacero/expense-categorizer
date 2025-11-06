@@ -69,11 +69,11 @@ export const CAPITAL_ONE_CATEGORY_MAP: Record<string, Category> = {
   'Fee/Interest Charge': 'Other',
 
   // Services
-  // NOTE: "Professional Services" is TOO BROAD in Capital One's system
-  // It includes: mortgages, contractors, sewer, tax software, etc.
-  // We intentionally DON'T map it here - let expert rules handle it
+  // NOTE: "Professional Services" and "Services" are TOO BROAD in Capital One's system
+  // They include: mortgages, contractors, sewer, tax software, HVAC, plumbing, etc.
+  // We intentionally DON'T map them here - let expert rules handle it
+  // Expert rules will properly categorize service providers like HVAC/plumbing as "Household"
   'Other Services': 'Other',
-  'Services': 'Other',
 
   // Miscellaneous
   'Other': 'Other',
