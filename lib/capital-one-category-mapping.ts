@@ -69,11 +69,20 @@ export const CAPITAL_ONE_CATEGORY_MAP: Record<string, Category> = {
   'Fee/Interest Charge': 'Other',
 
   // Services
-  // NOTE: "Professional Services" is TOO BROAD in Capital One's system
-  // It includes: mortgages, contractors, sewer, tax software, etc.
-  // We intentionally DON'T map it here - let expert rules handle it
-  'Other Services': 'Other',
-  'Services': 'Other',
+  // NOTE: Capital One's service categories are TOO BROAD:
+  // "Professional Services", "Services", "Other Services" include:
+  // - Mortgages (HOMESTEAD FUNDING CORP)
+  // - HVAC/Plumbing contractors (ROLAND J. DOWN SERVICE EX)
+  // - Sewer services (EASTON DYLAN SEWER AND)
+  // - Tax software (FREETAXUSA.COM)
+  // - Municipal bills (CITY OF ALBANY DIV)
+  //
+  // We intentionally DON'T map these categories here.
+  // Instead, let expert rules handle them for accurate categorization:
+  // - Mortgages → Bills & Utilities
+  // - HVAC/Plumbing → Household
+  // - Sewer → Bills & Utilities
+  // - Tax software → Bills & Utilities
 
   // Miscellaneous
   'Other': 'Other',
