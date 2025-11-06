@@ -121,6 +121,9 @@ function isHeaderRow(row: string[]): boolean {
 
 /**
  * Detect which columns contain date, description, amount, category, and type
+ *
+ * CAPITAL ONE FIX: Capital One has "Transaction Amount" AND "Balance" columns
+ * Both are numeric, but we need to pick "Transaction Amount", not "Balance"
  */
 function detectColumnIndices(row: string[]): {
   date: number;
@@ -135,21 +138,34 @@ function detectColumnIndices(row: string[]): {
   let categoryIdx: number | undefined;
   let typeIdx: number | undefined;
 
+  // PRIORITY DETECTION: Use header names first, then fallback to heuristics
   row.forEach((cell, idx) => {
     const normalized = cell.toLowerCase().trim();
 
     // Look for date column
-    if (normalized.includes('date') || isLikelyDate(cell)) {
-      dateIdx = idx;
+    if (normalized.includes('date') || normalized.includes('posted')) {
+      // Prefer "Transaction Date" over "Posted Date"
+      if (dateIdx === -1 || normalized.includes('transaction')) {
+        dateIdx = idx;
+      }
     }
 
-    // Look for amount column
-    if (normalized.includes('amount') || normalized.includes('sum') || normalized.includes('total') || isLikelyAmount(cell)) {
+    // Look for amount column - PRIORITIZE by keyword match
+    // CAPITAL ONE: Has "Transaction Amount" and "Balance" - we want Transaction Amount!
+    if (normalized.includes('amount')) {
+      // Strongly prefer "amount" in column name
       amountIdx = idx;
+    } else if (normalized.includes('debit') || normalized.includes('credit')) {
+      // Handle banks with separate debit/credit columns
+      if (amountIdx === -1) amountIdx = idx;
+    } else if (normalized.includes('sum') || normalized === 'total') {
+      // Accept "sum" or exactly "total" (not "balance total")
+      if (amountIdx === -1) amountIdx = idx;
     }
+    // NOTE: We no longer use "balance" as an amount column indicator!
 
     // Look for description column
-    if (normalized.includes('desc') || normalized.includes('merchant') || normalized.includes('transaction') || normalized.includes('name')) {
+    if (normalized.includes('desc') || normalized.includes('merchant') || normalized.includes('transaction') && !normalized.includes('date') && !normalized.includes('amount')) {
       descIdx = idx;
     }
 
@@ -158,13 +174,30 @@ function detectColumnIndices(row: string[]): {
       categoryIdx = idx;
     }
 
-    // Look for type column (Chase CSV has "Sale", "Payment", etc.)
-    if (normalized === 'type') {
+    // Look for type column (Chase/Capital One: "Sale", "Payment", "Purchase", etc.)
+    if (normalized === 'type' || normalized === 'transaction type') {
       typeIdx = idx;
     }
   });
 
-  // Default to standard order if detection fails
+  // FALLBACK: If no amount column found by header, use heuristic
+  // But skip columns that look like account numbers or balances
+  if (amountIdx === -1) {
+    row.forEach((cell, idx) => {
+      const normalized = cell.toLowerCase().trim();
+
+      // Skip if it's likely an account number or balance column
+      if (normalized.includes('account') || normalized.includes('balance') || normalized.includes('card')) {
+        return;
+      }
+
+      if (isLikelyAmount(cell) && amountIdx === -1) {
+        amountIdx = idx;
+      }
+    });
+  }
+
+  // Default to standard order if detection still fails
   if (dateIdx === -1) dateIdx = 0;
   if (descIdx === -1) descIdx = 1;
   if (amountIdx === -1) amountIdx = 2;
@@ -202,6 +235,9 @@ function isLikelyAmount(str: string): boolean {
 
 /**
  * Parse a single row into a transaction
+ *
+ * CAPITAL ONE FIX: Credit cards show purchases as positive and payments as negative
+ * We need to flip this for expense tracking (purchases should be negative)
  */
 function parseRow(
   row: string[],
@@ -222,7 +258,7 @@ function parseRow(
   }
 
   // Parse amount (handle negative, parentheses, currency symbols)
-  const amount = parseAmount(amountStr);
+  let amount = parseAmount(amountStr);
   if (isNaN(amount)) {
     throw new Error(`Invalid amount: "${amountStr}"`);
   }
@@ -230,10 +266,47 @@ function parseRow(
   // Validate date
   const date = parseDate(dateStr);
 
-  // Extract optional category and type (from Chase CSV)
+  // Extract optional category and type (from Chase/Capital One CSV)
   const originalCategory =
     indices.category !== undefined ? row[indices.category]?.trim() : undefined;
   const type = indices.type !== undefined ? row[indices.type]?.trim() : undefined;
+
+  // CAPITAL ONE CREDIT CARD FIX:
+  // Credit cards show purchases as positive (money you owe) and payments as negative (reducing debt)
+  // But for expense tracking, we want: expenses = negative, income/payments = positive
+  //
+  // Detect if this is a credit card transaction by checking:
+  // 1. Transaction Type column exists (Capital One/Chase have this)
+  // 2. Description contains "CAPITAL ONE" payment keywords
+  // 3. Type indicates "Payment" or "Credit"
+  if (type || description) {
+    const typeLower = (type || '').toLowerCase();
+    const descLower = description.toLowerCase();
+
+    // Check if this is a credit card format (has Transaction Type)
+    const isCreditCardFormat = !!type;
+
+    if (isCreditCardFormat) {
+      // For credit cards: FLIP the sign
+      // Purchases (positive in CSV) → negative (expense)
+      // Payments (negative in CSV) → positive (payment/transfer)
+
+      // Detect payment types that should stay positive (don't flip)
+      const isPayment =
+        typeLower.includes('payment') ||
+        typeLower.includes('credit') ||
+        descLower.includes('capital one') && (descLower.includes('payment') || descLower.includes('pymt')) ||
+        descLower.includes('autopay');
+
+      if (isPayment) {
+        // Payments in credit card CSV are negative, flip to positive
+        amount = Math.abs(amount);
+      } else {
+        // Purchases in credit card CSV are positive, flip to negative
+        amount = -Math.abs(amount);
+      }
+    }
+  }
 
   return {
     date,
