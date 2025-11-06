@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     const totalTime = Date.now() - startTime;
 
     // Step 3: Detect recurring transactions & subscriptions
-    const recurringAnalysis = detectRecurringTransactions(result.transactions);
+    const recurringAnalysis = await detectRecurringTransactions(result.transactions);
 
     // Track performance metrics
     trackPerformanceBreakdown(parseTime, aiTime, totalTime);
