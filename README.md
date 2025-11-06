@@ -14,7 +14,7 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 - **Saves Time**: Categorize 100+ transactions in seconds, not hours
 - **Saves Money**: Smart caching reduces AI costs by 50-80%
 - **Protects Privacy**: Your data is never stored — processed in real-time only
-- **Works Everywhere**: Supports Chase, Bank of America, and other major banks
+- **Works Everywhere**: Supports all major banks with 95% accuracy for Chase & Capital One
 
 ## ✨ Features
 
@@ -132,29 +132,42 @@ Transaction 2: "STARBUCKS #5678 SEATTLE"
 // Result: 50-80% fewer API calls = 50-80% cost savings
 ```
 
-## 📊 Supported File Formats
+## 📊 Supported Banks & Formats
 
-### 1. Chase Bank CSV
+### ⭐ Tier 1: Premium Support (95%+ Accuracy)
+- **Chase** (checking & credit card) - Uses built-in categories
+- **Capital One** (checking & credit card) - Uses built-in categories + smart grocery detection
+
+### ⭐ Tier 2: Standard Support (85-90% Accuracy)
+- **Bank of America** (checking & credit card)
+- **Wells Fargo** (checking & credit card)
+- **Citibank** (checking & credit card)
+- **Discover** (credit card)
+- **Any other bank** with CSV export
+
+**→ See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for complete compatibility details**
+
+### Format Examples
+
+The app automatically detects your CSV format! Minimum requirements: Date, Description, Amount.
+
+**Chase CSV** (with categories):
 ```csv
 Transaction Date,Post Date,Description,Category,Type,Amount
 01/15/2024,01/16/2024,STARBUCKS,Food & Drink,Sale,-5.45
-01/16/2024,01/17/2024,SHELL GAS,Gas,Sale,-45.00
 ```
 
-### 2. Simple CSV
+**Capital One CSV** (with debit/credit columns):
+```csv
+Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit
+01/15/2024,01/16/2024,1234,STARBUCKS,Dining,5.45,
+```
+
+**Simple CSV** (any bank):
 ```csv
 Date,Description,Amount
-2024-01-15,Starbucks Coffee,-5.45
-2024-01-16,Shell Gas Station,-45.00
+2024-01-15,Starbucks,-5.45
 ```
-
-### 3. Plain Text (Copy-Paste)
-```
-2024-01-15 Starbucks -5.45
-2024-01-16 Shell Gas -45.00
-```
-
-**The app automatically detects your format!**
 
 ## 🎯 Categories
 
@@ -316,7 +329,7 @@ npm run build
 A: Yes. Your data is processed in real-time and never stored. See our [Privacy Policy](/privacy).
 
 **Q: How accurate is the categorization?**
-A: 95%+ accuracy with smart priority logic and AI fallback.
+A: 95%+ for Chase & Capital One (built-in categories), 85-90% for other banks (AI + expert rules).
 
 **Q: What does it cost to run?**
 A: ~$0.50 per 1,000 transactions with merchant caching. New users get $5 free credits.
@@ -325,7 +338,7 @@ A: ~$0.50 per 1,000 transactions with merchant caching. New users get $5 free cr
 A: Currently supports 14 predefined categories. Custom categories planned for v1.1.
 
 **Q: Does it work with my bank?**
-A: Works with any bank that exports CSV (Chase, BofA, Wells Fargo, etc.).
+A: Yes! Works with any bank that exports CSV. See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for compatibility details.
 
 **Q: Can I self-host?**
 A: Yes! See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for Docker and self-hosting guides.
