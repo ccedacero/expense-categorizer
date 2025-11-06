@@ -90,105 +90,72 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
         )}
       </div>
 
-      {/* Grouped Subscriptions */}
-      {recurring.groups.length > 0 ? (
-        <div className="space-y-6">
-          {recurring.groups.map((group) => (
-            <div key={group.groupName} className="border-t pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {group.groupName}
-                </h3>
+      {/* All Subscriptions - Flat List (sorted by amount) */}
+      <div className="space-y-2">
+        {recurring.recurring.map((sub, index) => (
+          <div
+            key={`${sub.merchant}-${index}`}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-xl">
+                {FREQUENCY_ICONS[sub.frequency]}
+              </div>
+              <div>
+                <div className="font-medium text-gray-800">
+                  {sub.merchant}
+                </div>
                 <div className="text-sm text-gray-600">
-                  {formatCurrency(group.totalMonthly)}/mo
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {group.subscriptions.map((sub, index) => (
-                  <div
-                    key={`${sub.merchant}-${index}`}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">
-                        {FREQUENCY_ICONS[sub.frequency]}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-800">
-                          {sub.merchant}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {FREQUENCY_LABELS[sub.frequency]} • {sub.occurrences} charge{sub.occurrences !== 1 ? 's' : ''}
-                          {sub.nextExpectedDate && (
-                            <> • Next: {formatDate(sub.nextExpectedDate)}</>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-gray-800">
-                        {formatCurrency(sub.averageAmount)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Total: {formatCurrency(sub.totalSpent)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        /* Ungrouped List */
-        <div className="space-y-2">
-          {recurring.recurring.map((sub, index) => (
-            <div
-              key={`${sub.merchant}-${index}`}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="text-xl">
-                  {FREQUENCY_ICONS[sub.frequency]}
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800">
-                    {sub.merchant}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {FREQUENCY_LABELS[sub.frequency]} • {sub.occurrences} charge{sub.occurrences !== 1 ? 's' : ''}
-                    {sub.nextExpectedDate && (
-                      <> • Next: {formatDate(sub.nextExpectedDate)}</>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-semibold text-gray-800">
-                  {formatCurrency(sub.averageAmount)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  Total: {formatCurrency(sub.totalSpent)}
+                  {FREQUENCY_LABELS[sub.frequency]} • {sub.occurrences} charge{sub.occurrences !== 1 ? 's' : ''}
+                  {sub.nextExpectedDate && (
+                    <> • Next: {formatDate(sub.nextExpectedDate)}</>
+                  )}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="text-right">
+              <div className="font-semibold text-gray-800">
+                {formatCurrency(sub.averageAmount)}
+              </div>
+              <div className="text-xs text-gray-500">
+                Total: {formatCurrency(sub.totalSpent)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Helpful Tip */}
-      {recurring.hiddenCount > 0 && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* Helpful Tips */}
+      <div className="mt-6 space-y-3">
+        {/* Next Date Explanation */}
+        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
           <div className="flex items-start gap-2">
-            <span className="text-xl">💡</span>
-            <div className="text-sm text-blue-900">
-              <strong>Tip:</strong> We found {recurring.hiddenCount} small subscription{recurring.hiddenCount !== 1 ? 's' : ''} under $20/month.
-              These &ldquo;hidden&rdquo; charges can add up to over ${(recurring.recurring.filter(r => r.averageAmount < 20 && r.frequency === 'monthly').reduce((sum, r) => sum + r.averageAmount, 0) * 12).toFixed(0)} per year!
+            <span className="text-xl">📅</span>
+            <div className="text-sm text-purple-900">
+              <strong>About &quot;Next&quot; dates:</strong> Predicted based on your transaction history.
+              The date shown is calculated from the last charge + average billing cycle.
+              {recurring.recurring.length > 0 && recurring.recurring[0].dates.length > 0 && (
+                <span className="text-xs block mt-1 text-purple-700">
+                  (Based on data through {formatDate(recurring.recurring[0].dates[recurring.recurring[0].dates.length - 1])})
+                </span>
+              )}
             </div>
           </div>
         </div>
-      )}
+
+        {/* Hidden Subscriptions Tip */}
+        {recurring.hiddenCount > 0 && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <span className="text-xl">💡</span>
+              <div className="text-sm text-blue-900">
+                <strong>Tip:</strong> We found {recurring.hiddenCount} small subscription{recurring.hiddenCount !== 1 ? 's' : ''} under $20/month.
+                These &ldquo;hidden&rdquo; charges can add up to over ${(recurring.recurring.filter(r => r.averageAmount < 20 && r.frequency === 'monthly').reduce((sum, r) => sum + r.averageAmount, 0) * 12).toFixed(0)} per year!
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
