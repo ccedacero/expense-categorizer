@@ -1,20 +1,22 @@
 'use client';
 
 import { CategorizedTransaction } from '@/lib/types';
+import { RecurringAnalysis } from '@/lib/recurring-detector';
 import { exportToCSV, downloadCSV } from '@/lib/exporter';
 
 interface ExportButtonsProps {
   transactions: CategorizedTransaction[];
+  recurring?: RecurringAnalysis;
 }
 
-export default function ExportButtons({ transactions }: ExportButtonsProps) {
+export default function ExportButtons({ transactions, recurring }: ExportButtonsProps) {
   const handleDownloadCSV = () => {
-    const csv = exportToCSV(transactions);
+    const csv = exportToCSV(transactions, recurring);
     downloadCSV(csv);
   };
 
   const handleCopyToClipboard = () => {
-    const csv = exportToCSV(transactions);
+    const csv = exportToCSV(transactions, recurring);
     navigator.clipboard.writeText(csv);
     alert('✅ Copied to clipboard!');
   };

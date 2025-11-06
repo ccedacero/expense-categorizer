@@ -433,15 +433,26 @@ function expertCategorize(t: Transaction): Category {
     desc.includes('spectrum') || desc.includes('comcast') || desc.includes('xfinity') ||
     desc.includes('verizon') || desc.includes('at&t') || desc.includes('t-mobile') ||
     desc.includes('sprint') || desc.includes('metro by t-mobile') || desc.includes('mint mobile') ||
-    desc.includes('straighttalk') ||
+    desc.includes('straighttalk') || desc.includes('google voice') || desc.includes('google *voice') ||
 
     // Utilities
     desc.includes('electric') || desc.includes('power') || desc.includes('utility') ||
     desc.includes('water') || desc.includes('sewer') || desc.includes('albany water') ||
+    desc.includes('city of albany div') || desc.includes('municipal') ||
+
+    // Sewer companies (specific patterns)
+    desc.includes('sewer and') || desc.includes('easton dylan') ||
+
+    // Mortgage/Home Loans
+    desc.includes('mortgage') || desc.includes('homestead funding') ||
+    desc.includes('funding corp') || desc.includes('loan servicing') ||
 
     // Insurance
     desc.includes('insurance') || desc.includes('sterling insurance') ||
-    desc.includes('new york central mutual') ||
+    desc.includes('new york central mutual') || desc.includes('leatherstocking cooperati') ||
+
+    // Tax software subscriptions
+    desc.includes('freetaxusa') || desc.includes('turbotax') || desc.includes('hrblock') ||
 
     // Memberships
     desc.includes('aaa membership')
@@ -527,7 +538,18 @@ function expertCategorize(t: Transaction): Category {
   // ===================
 
   if (
-    desc.includes('roland j. down') // Home service/maintenance
+    // HVAC, Plumbing, Electrical contractors
+    desc.includes('roland j. down') || desc.includes('service ex') ||
+    desc.includes('hvac') || desc.includes('plumbing') || desc.includes('electrician') ||
+    desc.includes('handyman') || desc.includes('contractor') ||
+
+    // Home maintenance services
+    desc.includes('lawn') || desc.includes('landscaping') || desc.includes('mowing') ||
+    desc.includes('gutter') || desc.includes('roof') || desc.includes('chimney') ||
+    desc.includes('pest control') || desc.includes('exterminator') ||
+
+    // Cleaning services
+    desc.includes('maid') || desc.includes('cleaning service') || desc.includes('house clean')
   ) {
     return 'Household';
   }

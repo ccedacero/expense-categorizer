@@ -241,7 +241,10 @@ export default function Home() {
             )}
 
             {/* Export Buttons */}
-            <ExportButtons transactions={result.transactions} />
+            <ExportButtons
+              transactions={result.transactions}
+              recurring={result.recurring}
+            />
 
             {/* Results Table */}
             <ResultsTable
