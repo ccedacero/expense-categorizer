@@ -129,28 +129,108 @@ describe('parseTransactions', () => {
     expect(result.errors).toContain('Input is empty');
   });
 
-  it('should parse real-world Chase bank export', () => {
+  // ==========================================
+  // CHASE BANK FORMATS
+  // ==========================================
+
+  it('should parse Chase checking account export', () => {
     const input = `Transaction Date,Post Date,Description,Category,Type,Amount,Memo
-01/15/2024,01/16/2024,STARBUCKS #12345,Food & Drink,Sale,-5.45,
-01/15/2024,01/16/2024,UBER TRIP,Travel,Sale,-12.30,`;
+01/15/2024,01/16/2024,STARBUCKS #12345,Food & Drink,DEBIT,-5.45,
+01/16/2024,01/17/2024,PAYCHECK DEPOSIT,Income,CREDIT,3500.00,
+01/17/2024,01/18/2024,ATM WITHDRAWAL,Cash,ATM,-100.00,`;
 
     const result = parseTransactions(input);
 
-    expect(result.transactions).toHaveLength(2);
+    expect(result.transactions).toHaveLength(3);
     expect(result.transactions[0].description).toContain('STARBUCKS');
-    expect(result.transactions[0].amount).toBe(-5.45);
+    expect(result.transactions[0].amount).toBe(-5.45); // Expenses are negative
+    expect(result.transactions[1].description).toContain('PAYCHECK');
+    expect(result.transactions[1].amount).toBe(3500.00); // Income is positive
+    expect(result.transactions[2].amount).toBe(-100.00); // Withdrawals are negative
   });
 
-  it('should parse real-world Bank of America export', () => {
-    const input = `Date,Description,Amount,Running Bal.
-01/15/2024,WHOLE FOODS MARKET,-87.32,1234.56
-01/16/2024,DIRECT DEPOSIT SALARY,3500.00,4734.56`;
+  it('should parse Chase credit card export', () => {
+    const input = `Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+01/15/2024,01/16/2024,STARBUCKS #12345,Food & Drink,Sale,-5.45,
+01/16/2024,01/17/2024,AMAZON.COM,Shopping,Sale,-89.99,
+01/18/2024,01/19/2024,PAYMENT - THANK YOU,Payment,Payment,250.00,`;
 
     const result = parseTransactions(input);
 
-    expect(result.transactions).toHaveLength(2);
+    expect(result.transactions).toHaveLength(3);
+    expect(result.transactions[0].description).toContain('STARBUCKS');
+    expect(result.transactions[0].amount).toBe(-5.45); // Purchases are negative
+    expect(result.transactions[1].amount).toBe(-89.99); // Purchases are negative
+    expect(result.transactions[2].amount).toBe(250.00); // Payments are positive
+  });
+
+  // ==========================================
+  // BANK OF AMERICA FORMATS
+  // ==========================================
+
+  it('should parse Bank of America checking account export', () => {
+    const input = `Date,Description,Amount,Running Bal.
+01/15/2024,WHOLE FOODS MARKET,-87.32,1234.56
+01/16/2024,DIRECT DEPOSIT SALARY,3500.00,4734.56
+01/17/2024,ATM WITHDRAWAL,-60.00,4674.56`;
+
+    const result = parseTransactions(input);
+
+    expect(result.transactions).toHaveLength(3);
     expect(result.transactions[0].description).toBe('WHOLE FOODS MARKET');
-    expect(result.transactions[0].amount).toBe(-87.32);
+    expect(result.transactions[0].amount).toBe(-87.32); // Expenses are negative
+    expect(result.transactions[1].amount).toBe(3500.00); // Deposits are positive
+    expect(result.transactions[2].amount).toBe(-60.00); // Withdrawals are negative
+  });
+
+  it('should parse Bank of America credit card export', () => {
+    const input = `Posted Date,Reference Number,Payee,Address,Amount
+01/15/2024,12345678,STARBUCKS,NEW YORK NY,-5.45
+01/16/2024,12345679,AMAZON.COM,SEATTLE WA,-89.99
+01/18/2024,12345680,ONLINE PAYMENT,,-250.00`;
+
+    const result = parseTransactions(input);
+
+    expect(result.transactions).toHaveLength(3);
+    expect(result.transactions[0].description).toBe('STARBUCKS');
+    expect(result.transactions[0].amount).toBe(-5.45); // Purchases are negative
+    expect(result.transactions[1].amount).toBe(-89.99); // Purchases are negative
+    expect(result.transactions[2].amount).toBe(-250.00); // Payments are negative (paying off balance)
+  });
+
+  // ==========================================
+  // CAPITAL ONE FORMATS
+  // ==========================================
+
+  it('should parse Capital One checking account export', () => {
+    const input = `Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit
+01/15/2024,01/16/2024,1234,STARBUCKS STORE,Dining,5.45,
+01/16/2024,01/17/2024,1234,PAYROLL DEPOSIT,Income,,3500.00
+01/17/2024,01/18/2024,1234,ATM WITHDRAWAL,Cash,100.00,`;
+
+    const result = parseTransactions(input);
+
+    expect(result.transactions).toHaveLength(3);
+    expect(result.transactions[0].description).toContain('STARBUCKS');
+    expect(result.transactions[0].amount).toBe(-5.45); // Debits are negative (expenses)
+    expect(result.transactions[1].amount).toBe(3500.00); // Credits are positive (income)
+    expect(result.transactions[2].amount).toBe(-100.00); // Debits are negative (withdrawals)
+  });
+
+  it('should parse Capital One credit card export', () => {
+    const input = `Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit
+01/15/2024,01/16/2024,5678,STARBUCKS STORE,Dining,5.45,
+01/16/2024,01/17/2024,5678,AMAZON.COM,Shopping,89.99,
+01/18/2024,01/19/2024,5678,CAPITAL ONE AUTOPAY,Payment/Credit,,250.00`;
+
+    const result = parseTransactions(input);
+
+    expect(result.transactions).toHaveLength(3);
+    // For credit cards, debits are purchases (should be negative in our system)
+    expect(result.transactions[0].amount).toBe(-5.45);
+    expect(result.transactions[1].amount).toBe(-89.99);
+    // Credits are payments (should be positive in our system)
+    expect(result.transactions[2].amount).toBe(250.00);
   });
 
   it('should handle international currency formats', () => {
