@@ -4,6 +4,10 @@
  * Endpoint for categorizing transactions
  */
 
+// IMPORTANT: Force Node.js runtime (required for New Relic APM)
+// Edge Runtime doesn't support New Relic's Node.js APIs
+export const runtime = 'nodejs';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { parseTransactions } from '@/lib/parser';
 import { categorizeTransactions } from '@/lib/categorizer-improved'; // Using Claude AI with EXPERT rules 🚀
