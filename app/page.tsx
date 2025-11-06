@@ -5,6 +5,7 @@ import UploadZone from '@/components/upload-zone';
 import ResultsTable from '@/components/results-table';
 import CategoryChart from '@/components/category-chart';
 import ExportButtons from '@/components/export-buttons';
+import SubscriptionInsights from '@/components/subscription-insights';
 import { CategorizationResult, Category } from '@/lib/types';
 import { calculateSummary } from '@/lib/summary';
 
@@ -232,6 +233,11 @@ export default function Home() {
                 totalExpenses={result.totalExpenses}
                 totalIncome={result.totalIncome}
               />
+            )}
+
+            {/* Subscription Insights */}
+            {result.recurring && (
+              <SubscriptionInsights recurring={result.recurring} />
             )}
 
             {/* Export Buttons */}

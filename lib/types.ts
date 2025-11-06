@@ -54,13 +54,21 @@ export interface CacheStats {
   hitRate: string;
 }
 
+export interface RecurringAnalysis {
+  recurring: any[];
+  groups: any[];
+  totalMonthlySpend: number;
+  totalAnnualSpend: number;
+  hiddenCount: number;
+}
+
 export interface CategorizationResult {
   transactions: CategorizedTransaction[];
   summary: CategorySummary[];
   totalExpenses: number;
   totalIncome: number;
   cacheStats?: CacheStats; // For monitoring cost savings
-  recurring?: any; // Recurring transaction analysis (imported from recurring-detector)
+  recurring?: RecurringAnalysis; // Recurring transaction analysis
 }
 
 export interface ParseResult {
