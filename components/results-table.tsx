@@ -9,7 +9,7 @@ interface ResultsTableProps {
   onCategoryChange?: (index: number, newCategory: Category) => void;
 }
 
-type SortField = 'category' | 'amount' | null;
+type SortField = 'date' | 'category' | 'amount' | null;
 type SortDirection = 'asc' | 'desc';
 
 export default function ResultsTable({ transactions, onCategoryChange }: ResultsTableProps) {
@@ -57,7 +57,11 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
     const sorted = [...transactionsWithIndices].sort((a, b) => {
       let comparison = 0;
 
-      if (sortField === 'category') {
+      if (sortField === 'date') {
+        const dateA = new Date(a.transaction.date).getTime();
+        const dateB = new Date(b.transaction.date).getTime();
+        comparison = dateA - dateB;
+      } else if (sortField === 'category') {
         comparison = a.transaction.category.localeCompare(b.transaction.category);
       } else if (sortField === 'amount') {
         comparison = a.transaction.amount - b.transaction.amount;
@@ -81,8 +85,13 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
       <table className="w-full">
         <thead>
           <tr className="bg-gray-50 border-b">
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+            <th
+              className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onClick={() => handleSort('date')}
+              title="Click to sort by date"
+            >
               Date
+              <SortIndicator field="date" />
             </th>
             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Description
