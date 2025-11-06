@@ -467,11 +467,17 @@ function analyzePattern(
 
   // STRICTER: Check if amounts are highly consistent
   // Fixed subscriptions: < 5% variance (e.g., Netflix always $16.83)
-  // Variable subscriptions: < 25% variance (e.g., utility bills)
+  // Variable subscriptions: < 30% variance (e.g., utility bills, price increases)
+  // Relaxed from 25% to 30% to handle subscription price changes (Netflix $13→$17)
   const isFixedAmount = amountVariancePercent < 5;
-  const isVariableAmount = amountVariancePercent < 25;
+  const isVariableAmount = amountVariancePercent < 30;
 
-  if (!isFixedAmount && !isVariableAmount) {
+  // Special handling: If has strong subscription keywords, allow up to 35% variance
+  // This handles cases like Netflix price increases over time
+  const hasStrongKeywords = hasSubscriptionKeywords(merchant);
+  const allowedVariance = hasStrongKeywords ? 35 : 30;
+
+  if (!isFixedAmount && amountVariancePercent > allowedVariance) {
     return null; // Too much variance, likely not a subscription
   }
 
@@ -504,7 +510,7 @@ function analyzePattern(
 
   // Amount consistency
   if (isFixedAmount) confidence += 0.3; // Very consistent amounts
-  else if (isVariableAmount) confidence += 0.15; // Somewhat consistent
+  else if (amountVariancePercent < 30) confidence += 0.15; // Somewhat consistent
 
   // Timing consistency
   if (isConsistentTiming) confidence += 0.2;
@@ -515,7 +521,7 @@ function analyzePattern(
   if (sorted.length >= 8) confidence += 0.1;
 
   // Strong subscription keywords boost confidence significantly
-  if (hasSubscriptionKeywords(merchant)) {
+  if (hasStrongKeywords) {
     confidence = Math.min(confidence + 0.3, 1.0);
   }
 
@@ -528,8 +534,19 @@ function analyzePattern(
   const lastDate = sorted[sorted.length - 1].date;
   const nextExpectedDate = addDays(lastDate, Math.round(avgInterval));
 
+  // Extract clean merchant name (remove order IDs, clean up prefixes like PAYPAL)
+  let cleanMerchant = transactions[0].description.split(/[#*\d]/)[0].trim();
+
+  // Remove common payment processor prefixes to show actual service
+  cleanMerchant = cleanMerchant
+    .replace(/^PAYPAL\s+/i, '')
+    .replace(/^SQ\s+/i, '')
+    .replace(/^TST\s+/i, '')
+    .replace(/^CL\s+/i, '')
+    .trim();
+
   return {
-    merchant: transactions[0].description.split(/[#*\d]/)[0].trim(), // Original merchant name (cleaned)
+    merchant: cleanMerchant,
     amount: avgAmount,
     frequency,
     occurrences: sorted.length,
