@@ -222,28 +222,39 @@ async function categorizeBatchWithAI(
 Available categories:
 ${CATEGORIES.join(', ')}
 
-IMPORTANT RULES FOR PAYMENTS VS TRANSFERS:
-- "Payment Thank You" = Payment (NOT Income!)
-- Credit card payments = Payment (paying off debt)
+CRITICAL RULES FOR CREDIT CARDS vs BANK ACCOUNTS:
+
+CREDIT CARD TRANSACTIONS (most common):
+- Negative amounts = Expenses (charges to the card)
+- Positive amounts = NEVER Income! Always Payment or Refund
+  - "Payment Thank You" / "Automatic Payment" = Payment
+  - Positive amount from merchant (Walmart, Home Depot, etc.) = Refund
+- NEVER categorize positive amounts as "Income" on credit cards!
+
+BANK ACCOUNT TRANSACTIONS:
+- Positive amounts can be Income (payroll, salary, direct deposit)
+- Negative amounts = Expenses or Payments to credit cards
+
+SPECIFIC RULES:
+- "Payment Thank You" / "Automatic Payment" = Payment (NOT Income!)
+- Credit card payments to/from bank = Payment
   - "CHASE CREDIT CRD EPAY" = Payment
   - "CITI CARD ONLINE PAYMENT" = Payment
   - Any "EPAY" or "E-PAY" for credit cards = Payment
-- Mortgage/home loan payments = Payment (paying off debt)
+- Mortgage/home loan payments = Payment
   - "WF HOME MTG AUTO PAY" = Payment
-  - "MORTGAGE PAYMENT" = Payment
-- Loan/mortgage payments = Payment (paying off debt)
 - Venmo/Zelle/CashApp = Transfer (moving your own money)
-- Transfer between accounts = Transfer (moving your own money)
+- Transfer between accounts = Transfer
   - "JPMorgan Chase Ext Trnsfr" = Transfer
   - "ONLINE TRANSFER TO" = Transfer
-- Payroll/Salary = Income
+- Payroll/Salary = Income (bank accounts only!)
   - "NEW RELIC INC PAYROLL" = Income
-  - "NEW RELIC INC DIRECT DEP" = Income
-  - Any "PAYROLL" or "DIRECT DEP" with positive amount = Income
+  - "DIRECT DEP" with positive amount = Income
 - Investment purchases = Transfer
   - "VANGUARD BUY INVESTMENT" = Transfer
-  - "CHARLES SCHWAB BANK" = Transfer
-- Refunds = Income
+- Merchant refunds (positive amount from store) = Refund
+  - "THE HOME DEPOT" with positive amount = Refund
+  - "WALMART" with positive amount = Refund
 
 MERCHANT CATEGORIZATION:
 - Walmart/Target/Costco/Sam's Club = Groceries (unless clearly other)
@@ -358,8 +369,9 @@ function smartCategorize(t: Transaction): Category {
       return keywordCategory;
     }
 
-    // Default refunds to Income if we can't determine category
-    return 'Income';
+    // CRITICAL: For credit cards, default to Refund (NOT Income!)
+    // Only bank accounts should have Income, and those should be caught by expertCategorize
+    return 'Refund';
   }
 
   // PRIORITY 4: Fall back to expert rules for expenses
@@ -456,7 +468,7 @@ function expertCategorize(t: Transaction): Category {
   // ===================
 
   if (amount > 0) {
-    // Payroll and salary (prioritize over other patterns)
+    // Payroll and salary - ONLY for bank accounts, not credit cards
     if (
       desc.includes('payroll') || desc.includes('salary') ||
       desc.includes('direct dep') && !desc.includes('transfer') ||
@@ -466,17 +478,19 @@ function expertCategorize(t: Transaction): Category {
       return 'Income';
     }
 
-    // Refunds and returns
+    // Refunds and returns from merchants
     if (
       desc.includes('refund') || desc.includes('return') ||
       desc.includes('credit') && !desc.includes('card') ||
       desc.includes('cashback') || desc.includes('reward')
     ) {
-      return 'Income';
+      return 'Refund';
     }
 
-    // Default positive = income (unless it's a payment/transfer, handled above)
-    return 'Income';
+    // CRITICAL: Default positive amounts to Refund for credit cards
+    // This prevents credit card refunds from being miscategorized as Income
+    // Bank account deposits should be caught by the payroll/salary check above
+    return 'Refund';
   }
 
   // ===================
