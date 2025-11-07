@@ -74,7 +74,17 @@ export interface CategorizationResult {
   recurring?: RecurringAnalysis; // Recurring transaction analysis
 }
 
+export type CSVFormat =
+  | 'wells-fargo'
+  | 'chase'
+  | 'capital-one'
+  | 'generic-csv'
+  | 'plain-text'
+  | 'unknown';
+
 export interface ParseResult {
   transactions: Transaction[];
   errors: string[];
+  format?: CSVFormat; // Detected CSV format/bank type
+  hasCategories?: boolean; // Whether CSV included category column
 }

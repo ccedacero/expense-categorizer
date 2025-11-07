@@ -13,7 +13,16 @@ import { parseTransactions } from '@/lib/parser';
 import { categorizeTransactions } from '@/lib/categorizer-improved'; // Using Claude AI with EXPERT rules 🚀
 import { detectRecurringTransactions } from '@/lib/recurring-detector';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
-import {
+
+// Use different metrics backend based on environment
+// Vercel (serverless) → Simple structured logging
+// Local/Self-hosted → NewRelic APM
+const isVercel = process.env.VERCEL === '1';
+const metrics = isVercel
+  ? require('@/lib/vercel-metrics')
+  : require('@/lib/newrelic-metrics');
+
+const {
   trackAPICost,
   trackCachePerformance,
   trackCategorizationConfidence,
@@ -21,7 +30,8 @@ import {
   trackValidationError,
   trackPerformanceBreakdown,
   trackRequestMetadata,
-} from '@/lib/newrelic-metrics';
+  trackCSVFormat,
+} = metrics;
 
 export async function POST(request: NextRequest) {
   // Extract request metadata for tracking
@@ -96,6 +106,15 @@ export async function POST(request: NextRequest) {
           details: parseResult.errors,
         },
         { status: 400 }
+      );
+    }
+
+    // Track CSV format/bank type (helps understand user base)
+    if (parseResult.format) {
+      trackCSVFormat(
+        parseResult.format,
+        parseResult.hasCategories || false,
+        parseResult.transactions.length
       );
     }
 

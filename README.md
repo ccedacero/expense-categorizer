@@ -2,7 +2,7 @@
 
 > Automatically categorize your bank transactions using AI — fast, private, and cost-efficient
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR-USERNAME/expense-categorizer)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ccedacero/expense-categorizer)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -55,7 +55,7 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR-USERNAME/expense-categorizer
+git clone https://github.com/ccedacero/expense-categorizer
 cd expense-categorizer
 
 # Install dependencies
@@ -75,7 +75,7 @@ Open [http://localhost:3000](http://localhost:3000) and upload your CSV!
 
 **Option 1: Vercel (Recommended)**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR-USERNAME/expense-categorizer)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ccedacero/expense-categorizer)
 
 1. Click the button above
 2. Connect your GitHub account
@@ -279,7 +279,7 @@ We welcome contributions! Here's how to help:
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR-USERNAME/expense-categorizer
+git clone https://github.com/ccedacero/expense-categorizer
 cd expense-categorizer
 
 # Install dependencies
@@ -356,8 +356,8 @@ MIT License — see [LICENSE](./LICENSE) for details.
 
 ## 💬 Support
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR-USERNAME/expense-categorizer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR-USERNAME/expense-categorizer/discussions)
+- **Issues**: [GitHub Issues](https://github.com/ccedacero/expense-categorizer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ccedacero/expense-categorizer/discussions)
 
 ## ⭐ Show Your Support
 

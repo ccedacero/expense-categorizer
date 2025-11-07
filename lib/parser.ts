@@ -10,7 +10,7 @@
  */
 
 import Papa from 'papaparse';
-import { Transaction, ParseResult } from './types';
+import { Transaction, ParseResult, CSVFormat } from './types';
 
 /**
  * Main parser function
@@ -30,6 +30,43 @@ export function parseTransactions(input: string): ParseResult {
 
   // Fall back to plain text parsing
   return parsePlainText(trimmed);
+}
+
+/**
+ * Detect CSV format based on headers and column structure
+ */
+function detectCSVFormat(firstRow: string[], hasHeader: boolean, hasCategory: boolean): CSVFormat {
+  if (!hasHeader) {
+    // Check for Wells Fargo format (no headers, specific column pattern)
+    if (firstRow.length >= 5 && firstRow[2]?.trim().length <= 3) {
+      return 'wells-fargo';
+    }
+    return 'generic-csv';
+  }
+
+  const normalized = firstRow.map(cell => cell.toLowerCase().trim());
+
+  // Chase: Has "Category" column and often "Type"
+  if (normalized.includes('category') && (normalized.includes('type') || normalized.includes('posting date'))) {
+    return 'chase';
+  }
+
+  // Capital One: Has "Category" and typically "Debit" or "Credit" columns
+  if (normalized.includes('category') && (normalized.includes('debit') || normalized.includes('credit'))) {
+    return 'capital-one';
+  }
+
+  // Wells Fargo with headers: Specific patterns
+  if (normalized.some(col => col.includes('wells') || col.includes('wf'))) {
+    return 'wells-fargo';
+  }
+
+  // Generic CSV with categories
+  if (hasCategory) {
+    return 'generic-csv';
+  }
+
+  return 'generic-csv';
 }
 
 /**
@@ -59,6 +96,10 @@ function parseCSV(input: string): ParseResult {
 
   // Detect column indices
   const indices = detectColumnIndices(hasHeader ? firstRow : dataRows[0]);
+  const hasCategories = indices.category !== undefined;
+
+  // Detect CSV format
+  const format = detectCSVFormat(firstRow, hasHeader, hasCategories);
 
   dataRows.forEach((row, index) => {
     try {
@@ -71,7 +112,12 @@ function parseCSV(input: string): ParseResult {
     }
   });
 
-  return { transactions, errors };
+  return {
+    transactions,
+    errors,
+    format,
+    hasCategories,
+  };
 }
 
 /**
@@ -104,7 +150,12 @@ function parsePlainText(input: string): ParseResult {
     }
   });
 
-  return { transactions, errors };
+  return {
+    transactions,
+    errors,
+    format: 'plain-text',
+    hasCategories: false,
+  };
 }
 
 /**
