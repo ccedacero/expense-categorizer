@@ -192,6 +192,23 @@ export function trackRequestMetadata(ip: string, userAgent?: string, referer?: s
 }
 
 /**
+ * Track CSV format/bank type
+ * Helps understand which banks users are using
+ */
+export function trackCSVFormat(format: string, hasCategories: boolean, transactionCount: number) {
+  if (!newrelic) return;
+
+  newrelic.recordMetric(`Custom/CSV/Format/${format}`, 1);
+  newrelic.recordMetric('Custom/CSV/TotalUploads', 1);
+
+  newrelic.addCustomAttributes({
+    csvFormat: format,
+    csvHasCategories: hasCategories,
+    csvTransactionCount: transactionCount,
+  });
+}
+
+/**
  * Helper: Create a custom transaction
  * Useful for background tasks or non-HTTP operations
  */
