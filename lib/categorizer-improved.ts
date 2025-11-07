@@ -241,6 +241,9 @@ MERCHANT CATEGORIZATION:
 - E-ZPass/Tolls = Transportation
 - Airline/Hotel/Airbnb = Travel
 - CVS/Pharmacy = Healthcare
+- Habitat for Humanity/Red Cross/Charities = Charity/Donations
+- your-saving.com/Raise/CardCash = Gift Cards
+- Realtor Association/ACM/Professional licenses = Business Expenses
 
 Transactions:
 ${transactionList}
@@ -557,6 +560,72 @@ function expertCategorize(t: Transaction): Category {
     desc.includes('masterclass') || desc.includes('khan academy')
   ) {
     return 'Education';
+  }
+
+  // ===================
+  // BUSINESS EXPENSES
+  // ===================
+
+  if (
+    // Professional associations and memberships
+    desc.includes('realtor association') || desc.includes('mls') ||
+    desc.includes('association for computing') || desc.includes('acm membership') ||
+    desc.includes('bar association') || desc.includes('medical association') ||
+    desc.includes('professional organization') || desc.includes('chamber of commerce') ||
+
+    // Professional licenses and certifications
+    desc.includes('license fee') || desc.includes('professional license') ||
+    desc.includes('certification') || desc.includes('continuing education') ||
+    desc.includes('cle credit') || desc.includes('cpe credit') ||
+
+    // Professional services and tools
+    desc.includes('linkedin premium') || desc.includes('linkedin recruiter') ||
+    desc.includes('github pro') || desc.includes('jetbrains') ||
+    desc.includes('atlassian') || desc.includes('slack pro') ||
+
+    // Coworking and office
+    desc.includes('coworking') || desc.includes('wework') || desc.includes('regus')
+  ) {
+    return 'Business Expenses';
+  }
+
+  // ===================
+  // CHARITY/DONATIONS
+  // ===================
+
+  if (
+    // Specific charities
+    desc.includes('habitat for humanity') || desc.includes('hfh') || desc.includes('habitat c') ||
+    desc.includes('red cross') || desc.includes('united way') ||
+    desc.includes('salvation army') || desc.includes('goodwill') ||
+    desc.includes('feed the children') || desc.includes('world vision') ||
+
+    // Generic donation patterns (case-insensitive already via .toLowerCase())
+    desc.includes('donation') || desc.includes('donate') ||
+    desc.includes('nonprofit') || desc.includes('non-profit') ||
+    desc.includes('charity') || desc.includes('charitable') ||
+    desc.includes('foundation') && desc.includes('gift') ||
+    desc.includes('give') && (desc.includes('fund') || desc.includes('cause'))
+  ) {
+    return 'Charity/Donations';
+  }
+
+  // ===================
+  // GIFT CARDS
+  // ===================
+
+  if (
+    // Gift card discount platforms
+    desc.includes('your-saving') || desc.includes('yoursaving') ||
+    desc.includes('raise.com') || desc.includes('cardcash') ||
+    desc.includes('gift card mall') || desc.includes('giftcardmall') ||
+    desc.includes('giftcards.com') || desc.includes('cardpool') ||
+
+    // Direct gift card purchases
+    desc.includes('gift card') || desc.includes('giftcard') ||
+    desc.includes('egift') || desc.includes('e-gift')
+  ) {
+    return 'Gift Cards';
   }
 
   // ===================
