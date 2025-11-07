@@ -73,15 +73,27 @@ export async function categorizeTransactions(
 
 /**
  * Categorize with merchant caching for 50-80% cost reduction
+ *
+ * IMPORTANT: Transactions with originalCategory (from Capital One/Chase CSVs)
+ * bypass the cache to ensure bank-provided categories are always respected.
  */
 async function categorizeBatchWithCache(
   transactions: Transaction[]
 ): Promise<CategorizedTransaction[]> {
-  // Step 1: Check cache for each transaction
+  // Step 1: Separate transactions into those with/without bank categories
+  const withBankCategory: { transaction: Transaction; index: number }[] = [];
   const cached: CategorizedTransaction[] = [];
   const uncached: { transaction: Transaction; index: number }[] = [];
 
   transactions.forEach((transaction, index) => {
+    // PRIORITY: If transaction has originalCategory from bank, use smart rules
+    // This ensures Capital One/Chase categories are always respected
+    if (transaction.originalCategory) {
+      withBankCategory.push({ transaction, index });
+      return;
+    }
+
+    // For transactions without bank category, check cache
     const cachedResult = getCachedCategory(transaction.description);
     if (cachedResult) {
       // Cache hit! No AI call needed
@@ -96,32 +108,62 @@ async function categorizeBatchWithCache(
     }
   });
 
-  // Step 2: If everything is cached, return early
+  // Step 2: Process transactions with bank categories using smart rules
+  const bankCategoryResults: CategorizedTransaction[] = withBankCategory.map(({ transaction }) => ({
+    ...transaction,
+    category: smartCategorize(transaction),
+    confidence: 0.95, // High confidence for bank-provided categories + expert rules
+  }));
+
+  // Step 3: If no uncached transactions, combine and return early
   if (uncached.length === 0) {
-    return cached;
+    // Combine all results in original order
+    const resultMap = new Map<number, CategorizedTransaction>();
+
+    cached.forEach((result, idx) => {
+      // Find original index for cached results
+      transactions.forEach((t, originalIdx) => {
+        if (!t.originalCategory && t.description === result.description && !resultMap.has(originalIdx)) {
+          resultMap.set(originalIdx, result);
+        }
+      });
+    });
+
+    withBankCategory.forEach(({ index }, resultIdx) => {
+      resultMap.set(index, bankCategoryResults[resultIdx]);
+    });
+
+    return transactions.map((_, index) => resultMap.get(index)!);
   }
 
-  // Step 3: Only send uncached transactions to AI
+  // Step 4: Only send uncached transactions to AI
   const uncachedTransactions = uncached.map(u => u.transaction);
   const aiResults = await categorizeBatchWithAI(uncachedTransactions);
 
-  // Step 4: Cache the new results
+  // Step 5: Cache the new results (but only for non-bank-category transactions)
   aiResults.forEach((result) => {
     cacheMerchant(result.description, result.category, result.confidence || 0.8);
   });
 
-  // Step 5: Combine cached + new results in original order
+  // Step 6: Combine ALL results in original order
   const resultMap = new Map<number, CategorizedTransaction>();
+
+  // Add bank category results
+  withBankCategory.forEach(({ index }, resultIdx) => {
+    resultMap.set(index, bankCategoryResults[resultIdx]);
+  });
 
   // Add cached results
   transactions.forEach((transaction, index) => {
-    const cachedResult = getCachedCategory(transaction.description);
-    if (cachedResult) {
-      resultMap.set(index, {
-        ...transaction,
-        category: cachedResult.category,
-        confidence: cachedResult.confidence,
-      });
+    if (!transaction.originalCategory && !resultMap.has(index)) {
+      const cachedResult = getCachedCategory(transaction.description);
+      if (cachedResult) {
+        resultMap.set(index, {
+          ...transaction,
+          category: cachedResult.category,
+          confidence: cachedResult.confidence,
+        });
+      }
     }
   });
 
