@@ -41,7 +41,9 @@ export const CHASE_CATEGORY_MAP: Record<string, Category> = {
 
   // Personal & Services
   'Personal': 'Other',  // Personal care
-  'Professional Services': 'Other',  // Services
+  // NOTE: "Professional Services" intentionally NOT mapped here
+  // Both Chase and Capital One use this category, but it's too broad.
+  // Let it fall through to expert rules for accurate categorization.
   'Fees & Adjustments': 'Other',  // Bank fees
 
   // Gifts
