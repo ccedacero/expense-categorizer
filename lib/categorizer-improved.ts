@@ -225,9 +225,24 @@ ${CATEGORIES.join(', ')}
 IMPORTANT RULES FOR PAYMENTS VS TRANSFERS:
 - "Payment Thank You" = Payment (NOT Income!)
 - Credit card payments = Payment (paying off debt)
+  - "CHASE CREDIT CRD EPAY" = Payment
+  - "CITI CARD ONLINE PAYMENT" = Payment
+  - Any "EPAY" or "E-PAY" for credit cards = Payment
+- Mortgage/home loan payments = Payment (paying off debt)
+  - "WF HOME MTG AUTO PAY" = Payment
+  - "MORTGAGE PAYMENT" = Payment
 - Loan/mortgage payments = Payment (paying off debt)
 - Venmo/Zelle/CashApp = Transfer (moving your own money)
 - Transfer between accounts = Transfer (moving your own money)
+  - "JPMorgan Chase Ext Trnsfr" = Transfer
+  - "ONLINE TRANSFER TO" = Transfer
+- Payroll/Salary = Income
+  - "NEW RELIC INC PAYROLL" = Income
+  - "NEW RELIC INC DIRECT DEP" = Income
+  - Any "PAYROLL" or "DIRECT DEP" with positive amount = Income
+- Investment purchases = Transfer
+  - "VANGUARD BUY INVESTMENT" = Transfer
+  - "CHARLES SCHWAB BANK" = Transfer
 - Refunds = Income
 
 MERCHANT CATEGORIZATION:
@@ -361,31 +376,39 @@ function expertCategorize(t: Transaction): Category {
   const amount = t.amount;
 
   // ===================
-  // MORTGAGE/RENT (must check BEFORE payments!)
+  // PAYMENTS (paying off debt)
   // ===================
-  // Mortgage and rent are recurring bills, not one-time payments
-  // Check these first so they don't get caught by generic "payment" rules
 
+  // Mortgage and home loan payments (negative amounts for mortgage payments)
   if (
     desc.includes('wf home mtg') || desc.includes('wells fargo home mtg') ||
     desc.includes('home mtg auto pay') || desc.includes('mortgage payment') ||
     desc.includes('homestead funding') || desc.includes('quicken loans') ||
-    desc.includes('rent payment') || desc.includes('rent due')
+    desc.includes('mortgage auto pay')
   ) {
-    return 'Bills & Utilities';
+    return 'Payment';
   }
 
-  // ===================
-  // PAYMENTS (paying off debt)
-  // ===================
+  // Credit card payments (negative amounts = paying off cards from checking account)
+  if (amount < 0 && (
+    // Wells Fargo specific patterns
+    desc.includes('credit crd epay') || desc.includes('chase credit crd') ||
+    desc.includes('citi card online payment') || desc.includes('citicard online') ||
+    desc.includes('discover e-payment') || desc.includes('amex epay') ||
+    desc.includes('epay') && (desc.includes('credit') || desc.includes('card')) ||
+    // Generic credit card payment patterns
+    desc.includes('credit card payment') ||
+    desc.includes('cc payment') || desc.includes('card payment')
+  )) {
+    return 'Payment';
+  }
 
-  // Credit card payments (positive amounts with "payment" keyword)
+  // Credit card payments (positive amounts = refunds/returns, treated as payments received)
   if (amount > 0 && (
     desc.includes('payment thank you') ||
     desc.includes('automatic payment') ||
-    desc.includes('online payment') ||
+    desc.includes('online payment') && !desc.includes('transfer') ||
     desc.includes('mobile payment') ||
-    desc.includes('credit card payment') ||
     desc.includes('autopay') ||
     // Capital One specific patterns
     desc.includes('capital one mobile pymt') ||
@@ -395,11 +418,12 @@ function expertCategorize(t: Transaction): Category {
     return 'Payment';
   }
 
-  // Loan payments (excluding mortgage, which is handled above)
+  // Other loan payments
   if (
     desc.includes('loan payment') ||
     desc.includes('student loan') ||
-    desc.includes('car loan')
+    desc.includes('car loan') ||
+    desc.includes('rent payment') || desc.includes('rent due')
   ) {
     return 'Payment';
   }
@@ -410,13 +434,18 @@ function expertCategorize(t: Transaction): Category {
 
   // Transfers between accounts
   if (
-    desc.includes('transfer') || desc.includes('xfer') ||
+    desc.includes('transfer') || desc.includes('xfer') || desc.includes('trnsfr') ||
     desc.includes('venmo') || desc.includes('zelle') ||
     desc.includes('paypal transfer') || desc.includes('cash app') ||
+
+    // External transfers between banks
+    desc.includes('jpmorgan chase ext trnsfr') || desc.includes('chase ext trnsfr') ||
+    desc.includes('external transfer') || desc.includes('ext trnsfr') ||
 
     // Investment purchases (moving money to investment accounts)
     desc.includes('vanguard buy') || desc.includes('vanguard investment') ||
     desc.includes('charles schwab bank') || desc.includes('synchrony bank') ||
+    desc.includes('fidelity') && desc.includes('transfer') ||
     desc.includes('online transfer to')
   ) {
     return 'Transfer';
@@ -427,20 +456,26 @@ function expertCategorize(t: Transaction): Category {
   // ===================
 
   if (amount > 0) {
+    // Payroll and salary (prioritize over other patterns)
+    if (
+      desc.includes('payroll') || desc.includes('salary') ||
+      desc.includes('direct dep') && !desc.includes('transfer') ||
+      desc.includes('new relic inc') || desc.includes('payroll') ||
+      desc.includes('employer') || desc.includes('wages')
+    ) {
+      return 'Income';
+    }
+
+    // Refunds and returns
     if (
       desc.includes('refund') || desc.includes('return') ||
-      desc.includes('credit') || desc.includes('cashback') ||
-      desc.includes('reward')
+      desc.includes('credit') && !desc.includes('card') ||
+      desc.includes('cashback') || desc.includes('reward')
     ) {
       return 'Income';
     }
-    if (
-      desc.includes('salary') || desc.includes('payroll') ||
-      desc.includes('deposit') || desc.includes('direct dep')
-    ) {
-      return 'Income';
-    }
-    // Default positive = income (unless it's a payment, handled above)
+
+    // Default positive = income (unless it's a payment/transfer, handled above)
     return 'Income';
   }
 
