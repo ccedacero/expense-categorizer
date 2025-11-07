@@ -221,6 +221,19 @@ function detectColumnIndices(row: string[]): {
     });
   }
 
+  // WELLS FARGO DETECTION: If no headers detected, check for Wells Fargo format
+  // Wells Fargo format: Date, Amount, *, "", Description
+  // Key indicators:
+  // - Column 1 is numeric (amount)
+  // - Column 2 is "*" or similar flag
+  // - Description is in a later column (usually last non-empty)
+  if (dateIdx === -1 || descIdx === -1 || amountIdx === -1) {
+    const wellsFargoFormat = detectWellsFargoFormat(row);
+    if (wellsFargoFormat) {
+      return wellsFargoFormat;
+    }
+  }
+
   // Default to standard order if detection still fails
   // But skip defaults if we have debit/credit columns
   const hasDebitCredit = debitIdx !== undefined && creditIdx !== undefined;
@@ -236,6 +249,65 @@ function detectColumnIndices(row: string[]): {
     type: typeIdx,
     debit: debitIdx,
     credit: creditIdx,
+  };
+}
+
+/**
+ * Detect Wells Fargo CSV format
+ * Format: Date, Amount, *, "", Description
+ */
+function detectWellsFargoFormat(row: string[]): {
+  date: number;
+  description: number;
+  amount: number;
+  category?: number;
+  type?: number;
+  debit?: number;
+  credit?: number;
+} | null {
+  // Wells Fargo has at least 5 columns
+  if (row.length < 5) {
+    return null;
+  }
+
+  // Check if column 0 is date-like
+  const col0 = row[0]?.trim();
+  if (!col0 || !isLikelyDate(col0)) {
+    return null;
+  }
+
+  // Check if column 1 is amount-like (numeric)
+  const col1 = row[1]?.trim();
+  if (!col1 || !isLikelyAmount(col1)) {
+    return null;
+  }
+
+  // Check if column 2 is a flag (single character or short string)
+  const col2 = row[2]?.trim();
+  if (!col2 || col2.length > 3) {
+    return null;
+  }
+
+  // Find the description column (last non-empty column with text content)
+  let descIdx = -1;
+  for (let i = row.length - 1; i >= 0; i--) {
+    const cell = row[i]?.trim();
+    // Description should be longer than a few characters and not be numeric
+    if (cell && cell.length > 5 && !isLikelyAmount(cell) && !isLikelyDate(cell)) {
+      descIdx = i;
+      break;
+    }
+  }
+
+  if (descIdx === -1) {
+    return null;
+  }
+
+  // Found Wells Fargo format!
+  return {
+    date: 0,
+    amount: 1,
+    description: descIdx,
   };
 }
 

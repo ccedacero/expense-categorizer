@@ -361,6 +361,21 @@ function expertCategorize(t: Transaction): Category {
   const amount = t.amount;
 
   // ===================
+  // MORTGAGE/RENT (must check BEFORE payments!)
+  // ===================
+  // Mortgage and rent are recurring bills, not one-time payments
+  // Check these first so they don't get caught by generic "payment" rules
+
+  if (
+    desc.includes('wf home mtg') || desc.includes('wells fargo home mtg') ||
+    desc.includes('home mtg auto pay') || desc.includes('mortgage payment') ||
+    desc.includes('homestead funding') || desc.includes('quicken loans') ||
+    desc.includes('rent payment') || desc.includes('rent due')
+  ) {
+    return 'Bills & Utilities';
+  }
+
+  // ===================
   // PAYMENTS (paying off debt)
   // ===================
 
@@ -380,11 +395,11 @@ function expertCategorize(t: Transaction): Category {
     return 'Payment';
   }
 
-  // Loan/mortgage payments
+  // Loan payments (excluding mortgage, which is handled above)
   if (
     desc.includes('loan payment') ||
-    desc.includes('mortgage payment') ||
-    desc.includes('student loan')
+    desc.includes('student loan') ||
+    desc.includes('car loan')
   ) {
     return 'Payment';
   }
@@ -397,7 +412,12 @@ function expertCategorize(t: Transaction): Category {
   if (
     desc.includes('transfer') || desc.includes('xfer') ||
     desc.includes('venmo') || desc.includes('zelle') ||
-    desc.includes('paypal transfer') || desc.includes('cash app')
+    desc.includes('paypal transfer') || desc.includes('cash app') ||
+
+    // Investment purchases (moving money to investment accounts)
+    desc.includes('vanguard buy') || desc.includes('vanguard investment') ||
+    desc.includes('charles schwab bank') || desc.includes('synchrony bank') ||
+    desc.includes('online transfer to')
   ) {
     return 'Transfer';
   }
@@ -518,10 +538,6 @@ function expertCategorize(t: Transaction): Category {
 
     // Sewer companies (specific patterns)
     desc.includes('sewer and') || desc.includes('easton dylan') ||
-
-    // Mortgage/Home Loans
-    desc.includes('mortgage') || desc.includes('homestead funding') ||
-    desc.includes('funding corp') || desc.includes('loan servicing') ||
 
     // Insurance
     desc.includes('insurance') || desc.includes('sterling insurance') ||
