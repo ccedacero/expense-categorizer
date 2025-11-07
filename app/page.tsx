@@ -123,19 +123,37 @@ export default function Home() {
     };
   }, [result, selectedCategories]);
 
-  // Calculate filtered totals
+  // Calculate filtered totals with smart account type detection
   const filteredTotals = useMemo(() => {
-    if (!result) return { expenses: 0, income: 0 };
+    if (!result) return { expenses: 0, income: 0, payments: 0, refunds: 0, isCreditCard: false };
 
+    // Calculate expenses (negative amounts, excluding Payments and Transfers)
     const expenses = filteredTransactions
       .filter(t => t.amount < 0 && t.category !== 'Payment' && t.category !== 'Transfer')
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    const income = filteredTransactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
+    // Calculate payments (Payment category only)
+    const payments = filteredTransactions
+      .filter(t => t.category === 'Payment')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    return { expenses, income };
+    // Calculate refunds (Refund category only)
+    const refunds = filteredTransactions
+      .filter(t => t.category === 'Refund')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    // Calculate actual income (Income category only)
+    const income = filteredTransactions
+      .filter(t => t.category === 'Income')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    // Detect if this is a credit card statement:
+    // Credit cards have Payment/Refund categories but no Income
+    const hasPayments = payments > 0;
+    const hasIncome = income > 0;
+    const isCreditCard = hasPayments && !hasIncome;
+
+    return { expenses, income, payments, refunds, isCreditCard };
   }, [filteredTransactions, result]);
 
   const handleCategoryChange = (filteredIndex: number, newCategory: Category) => {
@@ -302,6 +320,9 @@ export default function Home() {
                 summary={filteredSummary}
                 totalExpenses={filteredTotals.expenses}
                 totalIncome={filteredTotals.income}
+                totalPayments={filteredTotals.payments}
+                totalRefunds={filteredTotals.refunds}
+                isCreditCard={filteredTotals.isCreditCard}
               />
             )}
 
