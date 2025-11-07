@@ -18,6 +18,7 @@ export type Category =
   | 'Gift Cards'  // Gift card purchases and prepaid card platforms
   | 'Income'
   | 'Payment'    // Credit card payments, loan payments
+  | 'Refund'     // Refunds from merchants (credit card returns)
   | 'Transfer'   // Moving money between your own accounts
   | 'Other';
 
