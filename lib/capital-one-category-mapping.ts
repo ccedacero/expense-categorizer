@@ -86,6 +86,7 @@ export const CAPITAL_ONE_CATEGORY_MAP: Record<string, Category> = {
 
   // Miscellaneous
   'Other': 'Other',
+  'Other Services': 'Other',
 };
 
 /**
