@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import UploadZone from '@/components/upload-zone';
 import ResultsTable from '@/components/results-table';
 import CategoryChart from '@/components/category-chart';
 import ExportButtons from '@/components/export-buttons';
 import SubscriptionInsights from '@/components/subscription-insights';
-import { CategorizationResult, Category } from '@/lib/types';
+import CategoryFilter from '@/components/category-filter';
+import { CategorizationResult, Category, CategorizedTransaction } from '@/lib/types';
 import { calculateSummary } from '@/lib/summary';
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [errorSuggestion, setErrorSuggestion] = useState<string | null>(null);
   const [transactionCount, setTransactionCount] = useState<number>(0);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
 
   const handleDataSubmit = async (input: string) => {
     setIsProcessing(true);
@@ -69,15 +71,83 @@ export default function Home() {
     setError(null);
     setErrorSuggestion(null);
     setTransactionCount(0);
+    setSelectedCategories([]); // Reset filter
   };
 
-  const handleCategoryChange = (index: number, newCategory: Category) => {
+  // Compute filtered transactions and maintain original indices
+  const { filteredTransactions, originalIndices, transactionCounts, filteredSummary } = useMemo(() => {
+    if (!result) {
+      return {
+        filteredTransactions: [],
+        originalIndices: [],
+        transactionCounts: {} as Record<Category, number>,
+        filteredSummary: [],
+      };
+    }
+
+    // Count transactions per category (for filter UI)
+    const counts = result.transactions.reduce((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + 1;
+      return acc;
+    }, {} as Record<Category, number>);
+
+    // If no categories selected, show all
+    if (selectedCategories.length === 0) {
+      return {
+        filteredTransactions: result.transactions,
+        originalIndices: result.transactions.map((_, i) => i),
+        transactionCounts: counts,
+        filteredSummary: result.summary,
+      };
+    }
+
+    // Filter transactions by selected categories
+    const filtered: CategorizedTransaction[] = [];
+    const indices: number[] = [];
+
+    result.transactions.forEach((transaction, originalIndex) => {
+      if (selectedCategories.includes(transaction.category)) {
+        filtered.push(transaction);
+        indices.push(originalIndex);
+      }
+    });
+
+    // Recalculate summary for filtered transactions
+    const summary = calculateSummary(filtered);
+
+    return {
+      filteredTransactions: filtered,
+      originalIndices: indices,
+      transactionCounts: counts,
+      filteredSummary: summary,
+    };
+  }, [result, selectedCategories]);
+
+  // Calculate filtered totals
+  const filteredTotals = useMemo(() => {
+    if (!result) return { expenses: 0, income: 0 };
+
+    const expenses = filteredTransactions
+      .filter(t => t.amount < 0 && t.category !== 'Payment' && t.category !== 'Transfer')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    const income = filteredTransactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return { expenses, income };
+  }, [filteredTransactions, result]);
+
+  const handleCategoryChange = (filteredIndex: number, newCategory: Category) => {
     if (!result) return;
+
+    // Map filtered index back to original index
+    const originalIndex = originalIndices[filteredIndex];
 
     // Update the transaction category
     const updatedTransactions = [...result.transactions];
-    updatedTransactions[index] = {
-      ...updatedTransactions[index],
+    updatedTransactions[originalIndex] = {
+      ...updatedTransactions[originalIndex],
       category: newCategory,
     };
 
@@ -229,9 +299,9 @@ export default function Home() {
             {/* Chart */}
             {result.summary.length > 0 && (
               <CategoryChart
-                summary={result.summary}
-                totalExpenses={result.totalExpenses}
-                totalIncome={result.totalIncome}
+                summary={filteredSummary}
+                totalExpenses={filteredTotals.expenses}
+                totalIncome={filteredTotals.income}
               />
             )}
 
@@ -242,13 +312,20 @@ export default function Home() {
 
             {/* Export Buttons */}
             <ExportButtons
-              transactions={result.transactions}
+              transactions={filteredTransactions}
               recurring={result.recurring}
+            />
+
+            {/* Category Filter */}
+            <CategoryFilter
+              selectedCategories={selectedCategories}
+              onCategoriesChange={setSelectedCategories}
+              transactionCounts={transactionCounts}
             />
 
             {/* Results Table */}
             <ResultsTable
-              transactions={result.transactions}
+              transactions={filteredTransactions}
               onCategoryChange={handleCategoryChange}
             />
           </div>
