@@ -13,13 +13,34 @@ export async function register() {
   // Check if we're in a Node.js environment (not browser, not edge)
   if (typeof window === 'undefined') {
     const runtime = process.env.NEXT_RUNTIME;
+    const isVercel = process.env.VERCEL === '1';
 
     console.log(`[Instrumentation] Runtime: ${runtime || 'nodejs (default)'}`);
+    console.log(`[Instrumentation] Environment: ${isVercel ? 'Vercel (Serverless)' : 'Local/Self-hosted'}`);
     console.log(`[Instrumentation] New Relic Key: ${process.env.NEW_RELIC_LICENSE_KEY ? 'SET' : 'NOT SET'}`);
+
+    // IMPORTANT: New Relic APM doesn't work properly with Vercel's serverless functions
+    // Vercel uses AWS Lambda which has:
+    // - Read-only filesystem (NewRelic can't write logs)
+    // - Ephemeral containers (connections don't persist)
+    // - Cold starts (NewRelic initialization adds latency)
+    //
+    // For serverless monitoring, use:
+    // - Vercel Analytics (built-in): https://vercel.com/analytics
+    // - NewRelic Serverless for AWS Lambda (requires Lambda layers)
+    // - Or other serverless-friendly APM (Datadog, Sentry)
+
+    if (isVercel) {
+      console.log('⚠️  New Relic APM skipped: Vercel serverless environment detected');
+      console.log('   → New Relic APM is designed for long-running servers, not Lambda functions');
+      console.log('   → Use Vercel Analytics or NewRelic Serverless for AWS Lambda instead');
+      return;
+    }
 
     // Initialize New Relic if:
     // 1. We have a license key
-    // 2. We're in Node.js runtime (not Edge)
+    // 2. We're NOT on Vercel (not serverless)
+    // 3. We're in Node.js runtime (not Edge)
     if (process.env.NEW_RELIC_LICENSE_KEY) {
       // Only initialize on Node.js runtime (Edge Runtime doesn't support New Relic)
       if (!runtime || runtime === 'nodejs') {
