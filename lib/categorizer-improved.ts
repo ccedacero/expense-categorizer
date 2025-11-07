@@ -267,6 +267,13 @@ Format: ["Category", "Category", ...]`;
  * 5. Default to "Other"
  */
 function smartCategorize(t: Transaction): Category {
+  // DEBUG: Log transaction details
+  if (t.description.includes('ROLAND') || t.description.includes('HOMESTEAD') || t.description.includes('EASTON')) {
+    console.log(`[DEBUG smartCategorize] Processing: ${t.description}`);
+    console.log(`[DEBUG smartCategorize]   originalCategory: ${t.originalCategory}`);
+    console.log(`[DEBUG smartCategorize]   amount: ${t.amount}`);
+  }
+
   // PRIORITY 1: Handle Payments (Type == "Payment" OR Category == "Payment/Credit")
   if (t.type && t.type.toLowerCase() === 'payment') {
     return 'Payment';
@@ -279,12 +286,18 @@ function smartCategorize(t: Transaction): Category {
   if (t.originalCategory) {
     // Try Chase mapping first
     let mappedCategory = mapChaseCategory(t.originalCategory);
+    if (t.description.includes('ROLAND') || t.description.includes('HOMESTEAD') || t.description.includes('EASTON')) {
+      console.log(`[DEBUG smartCategorize]   Chase mapping: ${mappedCategory}`);
+    }
     if (mappedCategory) {
       return mappedCategory;
     }
 
     // Try Capital One mapping (with merchant-specific logic)
     mappedCategory = mapCapitalOneCategory(t.originalCategory, t.description);
+    if (t.description.includes('ROLAND') || t.description.includes('HOMESTEAD') || t.description.includes('EASTON')) {
+      console.log(`[DEBUG smartCategorize]   Capital One mapping: ${mappedCategory}`);
+    }
     if (mappedCategory) {
       return mappedCategory;
     }
@@ -314,7 +327,14 @@ function smartCategorize(t: Transaction): Category {
   }
 
   // PRIORITY 4: Fall back to expert rules for expenses
-  return expertCategorize(t);
+  if (t.description.includes('ROLAND') || t.description.includes('HOMESTEAD') || t.description.includes('EASTON')) {
+    console.log(`[DEBUG smartCategorize]   Falling back to expertCategorize()`);
+  }
+  const result = expertCategorize(t);
+  if (t.description.includes('ROLAND') || t.description.includes('HOMESTEAD') || t.description.includes('EASTON')) {
+    console.log(`[DEBUG smartCategorize]   expertCategorize returned: ${result}`);
+  }
+  return result;
 }
 
 /**
@@ -325,6 +345,15 @@ function smartCategorize(t: Transaction): Category {
 function expertCategorize(t: Transaction): Category {
   const desc = t.description.toLowerCase();
   const amount = t.amount;
+
+  // DEBUG: Log for problematic transactions
+  if (desc.includes('roland') || desc.includes('homestead') || desc.includes('easton')) {
+    console.log(`[DEBUG expertCategorize] desc: "${desc}"`);
+    console.log(`[DEBUG expertCategorize]   includes('roland j. down'): ${desc.includes('roland j. down')}`);
+    console.log(`[DEBUG expertCategorize]   includes('service ex'): ${desc.includes('service ex')}`);
+    console.log(`[DEBUG expertCategorize]   includes('homestead funding'): ${desc.includes('homestead funding')}`);
+    console.log(`[DEBUG expertCategorize]   includes('easton dylan'): ${desc.includes('easton dylan')}`);
+  }
 
   // ===================
   // PAYMENTS (paying off debt)
