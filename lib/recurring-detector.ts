@@ -78,11 +78,15 @@ const EXCLUDED_MERCHANT_PATTERNS = [
   /pizza/i,
   /restaurant/i,
   /cafe/i,
+  /coffee/i,  // Coffee shops (Alias Coffee, etc.)
+  /espresso/i,  // Espresso bars
   /diner/i,
   /deli/i,
   /bistro/i,
   /grill/i,
   /eatery/i,
+  /bagel/i,  // Bagel shops
+  /bakery/i,  // Bakeries
   /\btst\b/i,  // TST prefix for restaurants
 
   // Food Delivery (orders, not subscriptions)
@@ -123,8 +127,8 @@ const EXCLUDED_MERCHANT_PATTERNS = [
   /market\s*(?:32|\d+)/i,
   /c\s*town/i,
 
-  // Payment Processors & Terminals (one-time purchases, not subscriptions)
-  /^sq\s+/i,  // Square payment terminal (e.g., "SQ ACME COFFEE" is a purchase, not a subscription)
+  // NOTE: Square/TST/PayPal merchants are now properly extracted in normalizeMerchant()
+  // Individual merchants (coffee shops, restaurants) are excluded by their category patterns above
 
   // Generic Payments & Transfers
   /payment\s*thank\s*you/i,
@@ -348,17 +352,42 @@ function groupByMerchant(
 /**
  * Normalize merchant name for pattern matching
  * Example: "NETFLIX #1234" → "netflix"
+ *
+ * Special handling for payment processors:
+ * - Square: "SQ *ALIAS COFFEE" → "alias coffee" (preserve merchant after SQ *)
+ * - TST: "TST*UNCOMMON GROUNDS" → "uncommon grounds"
+ * - PayPal: "PAYPAL *MERCHANT" → "merchant"
  */
 function normalizeMerchant(description: string): string {
-  return description
-    .toLowerCase()
-    .replace(/[#*]\w+/g, '') // Remove #1234 or *5678
+  let normalized = description.toLowerCase();
+
+  // Special handling for Square terminals - preserve merchant name after "SQ *"
+  // Example: "SQ *ALIAS COFFEE" should normalize to "alias coffee", not "sq"
+  const sqMatch = normalized.match(/^sq\s*\*\s*(.+)/);
+  if (sqMatch) {
+    normalized = sqMatch[1]; // Extract merchant name after "SQ *"
+  }
+
+  // Special handling for TST payment processor
+  const tstMatch = normalized.match(/^tst\s*\*?\s*(.+)/);
+  if (tstMatch) {
+    normalized = tstMatch[1];
+  }
+
+  // Special handling for PayPal
+  const paypalMatch = normalized.match(/^paypal\s*\*\s*(.+)/);
+  if (paypalMatch) {
+    normalized = paypalMatch[1];
+  }
+
+  return normalized
+    .replace(/[#]\w+/g, '') // Remove #1234 order IDs
     .replace(/\d{2,}/g, '') // Remove long numbers
     .replace(/\b(inc|llc|ltd|corp|co)\b/g, '') // Remove company suffixes
     .replace(/[^a-z\s]/g, '') // Keep only letters and spaces
     .trim()
     .split(/\s+/)
-    .slice(0, 2) // Take first 2 words
+    .slice(0, 3) // Take first 3 words (increased from 2 to better differentiate merchants)
     .join(' ')
     .trim();
 }
@@ -537,15 +566,32 @@ function analyzePattern(
   const lastDate = sorted[sorted.length - 1].date;
   const nextExpectedDate = addDays(lastDate, Math.round(avgInterval));
 
-  // Extract clean merchant name (remove order IDs, clean up prefixes like PAYPAL)
-  let cleanMerchant = transactions[0].description.split(/[#*\d]/)[0].trim();
+  // Extract clean merchant name
+  let cleanMerchant = transactions[0].description.trim();
 
-  // Remove common payment processor prefixes to show actual service
+  // Special handling for payment processors - extract actual merchant name
+  // Square: "SQ *ALIAS COFFEE" → "ALIAS COFFEE"
+  const sqMatch = cleanMerchant.match(/^SQ\s*\*\s*(.+)/i);
+  if (sqMatch) {
+    cleanMerchant = sqMatch[1];
+  }
+
+  // TST: "TST*UNCOMMON GROUNDS" → "UNCOMMON GROUNDS"
+  const tstMatch = cleanMerchant.match(/^TST\s*\*?\s*(.+)/i);
+  if (tstMatch) {
+    cleanMerchant = tstMatch[1];
+  }
+
+  // PayPal: "PAYPAL *MERCHANT" → "MERCHANT"
+  const paypalMatch = cleanMerchant.match(/^PAYPAL\s*\*\s*(.+)/i);
+  if (paypalMatch) {
+    cleanMerchant = paypalMatch[1];
+  }
+
+  // Remove order IDs and transaction numbers
   cleanMerchant = cleanMerchant
-    .replace(/^PAYPAL\s+/i, '')
-    .replace(/^SQ\s+/i, '')
-    .replace(/^TST\s+/i, '')
-    .replace(/^CL\s+/i, '')
+    .replace(/[#]\w+/g, '') // Remove #1234
+    .replace(/\s+\d{4,}/g, '') // Remove long numbers at end
     .trim();
 
   return {
