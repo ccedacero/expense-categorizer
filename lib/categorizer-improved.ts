@@ -321,10 +321,11 @@ Format: ["Category", "Category", ...]`;
  *
  * Priority Order:
  * 1. If Type == "Payment" OR originalCategory == "Payment/Credit" → "Payment"
- * 2. If originalCategory exists (from Chase/Capital One CSV) → Map and use it
- * 3. If refund (Amount > 0 and Type != "Payment") → Try originalCategory or keyword match
- * 4. Fall back to expert rules
- * 5. Default to "Other"
+ * 2. If Type == "Return" OR Type == "Refund" → "Refund" (Chase/bank refunds)
+ * 3. If originalCategory exists (from Chase/Capital One CSV) → Map and use it
+ * 4. If refund (Amount > 0 and Type != "Payment") → Try originalCategory or keyword match
+ * 5. Fall back to expert rules
+ * 6. Default to "Other"
  */
 function smartCategorize(t: Transaction): Category {
   // PRIORITY 1: Handle Payments (Type == "Payment" OR Category == "Payment/Credit")
@@ -335,7 +336,13 @@ function smartCategorize(t: Transaction): Category {
     return 'Payment';
   }
 
-  // PRIORITY 2: Use existing category from CSV (Chase or Capital One)
+  // PRIORITY 2: Handle Returns/Refunds (Type == "Return" OR Type == "Refund")
+  // Chase CSV has Type="Return" for refunds
+  if (t.type && (t.type.toLowerCase() === 'return' || t.type.toLowerCase() === 'refund')) {
+    return 'Refund';
+  }
+
+  // PRIORITY 3: Use existing category from CSV (Chase or Capital One)
   if (t.originalCategory) {
     // Try Chase mapping first
     let mappedCategory = mapChaseCategory(t.originalCategory);
@@ -350,7 +357,7 @@ function smartCategorize(t: Transaction): Category {
     }
   }
 
-  // PRIORITY 3: Handle Refunds (positive amount, not a payment)
+  // PRIORITY 4: Handle Refunds (positive amount, not a payment or return)
   if (t.amount > 0) {
     // Try to use original category for refunds
     if (t.originalCategory) {
@@ -374,7 +381,7 @@ function smartCategorize(t: Transaction): Category {
     return 'Refund';
   }
 
-  // PRIORITY 4: Fall back to expert rules for expenses
+  // PRIORITY 5: Fall back to expert rules for expenses
   return expertCategorize(t);
 }
 
