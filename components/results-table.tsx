@@ -138,11 +138,11 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <div className="relative inline-block">
+                  <div className="relative inline-block group">
                     <select
                       value={transaction.category}
                       onChange={(e) => handleCategoryChange(originalIndex, e.target.value as Category)}
-                      className="appearance-none cursor-pointer px-3 py-1 pr-8 rounded-full text-white font-medium border-2 border-transparent hover:border-white/30 focus:border-white/50 focus:outline-none transition-all"
+                      className="appearance-none cursor-pointer px-3 py-1.5 pr-9 rounded-full text-white font-medium border-2 border-transparent hover:border-white/40 hover:shadow-md focus:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
                       style={{
                         backgroundColor: CATEGORY_COLORS[transaction.category],
                       }}
@@ -154,8 +154,15 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white text-xs">
-                      ▼
+                    {/* Dropdown arrow indicator - visible on hover */}
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-all group-hover:scale-110">
+                      <svg
+                        className="w-3.5 h-3.5 text-white drop-shadow-sm"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
                     </div>
                     <span className="ml-2 text-xs text-gray-400">
                       {CATEGORY_ICONS[transaction.category]}
