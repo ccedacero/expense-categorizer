@@ -15,6 +15,9 @@ export const CATEGORIES: Category[] = [
   'Groceries',
   'Household',
   'Education',
+  'Business Expenses',
+  'Charity/Donations',
+  'Gift Cards',
   'Income',
   'Payment',
   'Transfer',
@@ -33,6 +36,9 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   'Groceries': '#51CF66',
   'Household': '#7048E8',    // Dark purple - home services and maintenance
   'Education': '#1C7ED6',    // Dark blue - learning and development
+  'Business Expenses': '#228BE6',  // Blue - professional development
+  'Charity/Donations': '#40C057',  // Green - giving back
+  'Gift Cards': '#FD7E14',   // Orange - prepaid/stored value
   'Income': '#37B24D',
   'Payment': '#FA5252',      // Red - money going out to pay debt
   'Transfer': '#748FFC',
@@ -51,6 +57,9 @@ export const CATEGORY_ICONS: Record<Category, string> = {
   'Groceries': '🛒',
   'Household': '🏠',      // House - home services and maintenance
   'Education': '📚',      // Books - learning and education
+  'Business Expenses': '💼',  // Briefcase - professional expenses
+  'Charity/Donations': '❤️',  // Heart - charitable giving
+  'Gift Cards': '🎁',    // Gift - stored value cards
   'Income': '💰',
   'Payment': '💳',        // Credit card - represents paying off debt
   'Transfer': '🔄',

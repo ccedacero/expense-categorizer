@@ -158,6 +158,42 @@ function ruleBasedCategorize(transaction: Transaction): Category {
     return 'Transfer';
   }
 
+  // Business Expenses
+  if (
+    desc.includes('realtor association') || desc.includes('mls') ||
+    desc.includes('association for computing') || desc.includes('acm membership') ||
+    desc.includes('bar association') || desc.includes('medical association') ||
+    desc.includes('professional organization') || desc.includes('chamber of commerce') ||
+    desc.includes('license fee') || desc.includes('professional license') ||
+    desc.includes('certification') || desc.includes('continuing education') ||
+    desc.includes('linkedin premium') || desc.includes('github pro') ||
+    desc.includes('coworking') || desc.includes('wework')
+  ) {
+    return 'Business Expenses';
+  }
+
+  // Charity/Donations
+  if (
+    desc.includes('habitat for humanity') || desc.includes('hfh') || desc.includes('habitat c') ||
+    desc.includes('red cross') || desc.includes('united way') ||
+    desc.includes('salvation army') || desc.includes('goodwill') ||
+    desc.includes('donation') || desc.includes('donate') ||
+    desc.includes('nonprofit') || desc.includes('non-profit') ||
+    desc.includes('charity') || desc.includes('charitable')
+  ) {
+    return 'Charity/Donations';
+  }
+
+  // Gift Cards
+  if (
+    desc.includes('your-saving') || desc.includes('yoursaving') ||
+    desc.includes('raise.com') || desc.includes('cardcash') ||
+    desc.includes('gift card') || desc.includes('giftcard') ||
+    desc.includes('egift') || desc.includes('e-gift')
+  ) {
+    return 'Gift Cards';
+  }
+
   return 'Other';
 }
 

@@ -13,6 +13,9 @@ export type Category =
   | 'Groceries'
   | 'Household'  // Home maintenance, repairs, services
   | 'Education'  // Books, courses, learning materials
+  | 'Business Expenses'  // Professional dues, licenses, associations
+  | 'Charity/Donations'  // Nonprofit contributions, charitable giving
+  | 'Gift Cards'  // Gift card purchases and prepaid card platforms
   | 'Income'
   | 'Payment'    // Credit card payments, loan payments
   | 'Transfer'   // Moving money between your own accounts
