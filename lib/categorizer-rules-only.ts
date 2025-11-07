@@ -125,7 +125,8 @@ function ruleBasedCategorize(transaction: Transaction): Category {
     desc.includes('verizon') || desc.includes('at&t') || desc.includes('t-mobile') ||
     desc.includes('comcast') || desc.includes('spectrum') || desc.includes('xfinity') ||
     desc.includes('water') || desc.includes('sewer') || desc.includes('trash') ||
-    desc.includes('insurance') || desc.includes('rent') || desc.includes('mortgage')
+    desc.includes('insurance') || desc.includes('rent') || desc.includes('mortgage') ||
+    desc.includes('wf home mtg') || desc.includes('home mtg auto pay')
   ) {
     return 'Bills & Utilities';
   }
@@ -153,7 +154,9 @@ function ruleBasedCategorize(transaction: Transaction): Category {
   if (
     desc.includes('transfer') || desc.includes('xfer') ||
     desc.includes('venmo') || desc.includes('zelle') || desc.includes('paypal') ||
-    desc.includes('cash app') || desc.includes('apple pay')
+    desc.includes('cash app') || desc.includes('apple pay') ||
+    desc.includes('vanguard buy') || desc.includes('charles schwab bank') ||
+    desc.includes('synchrony bank') || desc.includes('online transfer to')
   ) {
     return 'Transfer';
   }
