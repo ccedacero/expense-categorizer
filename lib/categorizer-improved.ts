@@ -115,8 +115,18 @@ async function categorizeBatchWithCache(
     confidence: 0.95, // High confidence for bank-provided categories + expert rules
   }));
 
-  // Step 3: If no uncached transactions, combine and return early
-  if (uncached.length === 0) {
+  // Step 2.5: Find transactions that smartCategorize returned "Other" for
+  // These should be sent to AI as a fallback for better categorization
+  const needsAIFallback: { transaction: Transaction; index: number }[] = [];
+  withBankCategory.forEach(({ transaction, index }, resultIdx) => {
+    if (bankCategoryResults[resultIdx].category === 'Other') {
+      // Expert rules couldn't categorize this - let AI try
+      needsAIFallback.push({ transaction, index });
+    }
+  });
+
+  // Step 3: If no uncached transactions and no AI fallback needed, combine and return early
+  if (uncached.length === 0 && needsAIFallback.length === 0) {
     // Combine all results in original order
     const resultMap = new Map<number, CategorizedTransaction>();
 
@@ -136,19 +146,40 @@ async function categorizeBatchWithCache(
     return transactions.map((_, index) => resultMap.get(index)!);
   }
 
-  // Step 4: Only send uncached transactions to AI
-  const uncachedTransactions = uncached.map(u => u.transaction);
-  const aiResults = await categorizeBatchWithAI(uncachedTransactions);
+  // Step 4: Send uncached + AI fallback transactions to AI
+  const transactionsForAI = [
+    ...uncached.map(u => u.transaction),
+    ...needsAIFallback.map(u => u.transaction),
+  ];
+  const aiResults = await categorizeBatchWithAI(transactionsForAI);
 
   // Step 5: Cache the new results (but only for non-bank-category transactions)
-  aiResults.forEach((result) => {
+  // Split AI results: first N are for uncached, rest are for AI fallback
+  const uncachedAIResults = aiResults.slice(0, uncached.length);
+  const fallbackAIResults = aiResults.slice(uncached.length);
+
+  uncachedAIResults.forEach((result) => {
     cacheMerchant(result.description, result.category, result.confidence || 0.8);
   });
 
-  // Step 6: Combine ALL results in original order
+  // Step 6: Override "Other" results from bank categories with AI fallback results
+  needsAIFallback.forEach(({ index }, fallbackIdx) => {
+    const aiResult = fallbackAIResults[fallbackIdx];
+    // Find the bankCategoryResults index for this transaction
+    const bankResultIdx = withBankCategory.findIndex(item => item.index === index);
+    if (bankResultIdx !== -1 && aiResult) {
+      // Replace "Other" with AI result
+      bankCategoryResults[bankResultIdx] = {
+        ...aiResult,
+        confidence: 0.85, // Slightly lower confidence for AI fallback
+      };
+    }
+  });
+
+  // Step 7: Combine ALL results in original order
   const resultMap = new Map<number, CategorizedTransaction>();
 
-  // Add bank category results
+  // Add bank category results (now with AI overrides)
   withBankCategory.forEach(({ index }, resultIdx) => {
     resultMap.set(index, bankCategoryResults[resultIdx]);
   });
@@ -169,7 +200,7 @@ async function categorizeBatchWithCache(
 
   // Add AI results for uncached items
   uncached.forEach(({ index }, aiIndex) => {
-    resultMap.set(index, aiResults[aiIndex]);
+    resultMap.set(index, uncachedAIResults[aiIndex]);
   });
 
   // Return in original order
