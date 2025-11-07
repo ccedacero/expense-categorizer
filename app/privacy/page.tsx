@@ -177,6 +177,21 @@ export default function PrivacyPolicy() {
             <li>No persistent storage</li>
           </ul>
 
+          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+            <p className="text-sm font-semibold text-blue-900 mb-1">📂 View Source Code</p>
+            <a
+              href="https://github.com/ccedacero/expense-categorizer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 underline text-sm break-all"
+            >
+              github.com/ccedacero/expense-categorizer
+            </a>
+            <p className="text-xs text-blue-800 mt-2">
+              Audit the code yourself • Report security issues • Contribute improvements
+            </p>
+          </div>
+
           <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">What You Can Verify</h3>
           <ol className="list-decimal list-inside text-gray-700 mb-4 ml-4 space-y-1">
             <li>View <code className="bg-gray-100 px-2 py-1 rounded text-sm">app/api/categorize/route.ts</code> - No database writes</li>

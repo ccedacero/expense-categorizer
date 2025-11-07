@@ -340,7 +340,20 @@ export default function Home() {
               © {new Date().getFullYear()} AI Expense Categorizer. All rights reserved.
             </p>
             <p className="mt-2 text-xs">
-              Your data is processed in real-time and never stored.
+              Your data is processed in real-time and never stored.{' '}
+              <a href="/privacy" className="text-blue-600 hover:text-blue-700 underline">
+                Privacy Policy
+              </a>
+            </p>
+            <p className="mt-2 text-xs">
+              <a
+                href="https://github.com/ccedacero/expense-categorizer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-gray-700 underline"
+              >
+                Open Source on GitHub
+              </a>
             </p>
           </div>
         </div>
