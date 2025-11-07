@@ -50,18 +50,35 @@ function ruleBasedCategorize(transaction: Transaction): Category {
   const desc = transaction.description.toLowerCase();
   const amount = transaction.amount;
 
-  // Income detection
+  // Positive amounts - handle carefully for credit cards vs bank accounts
   if (amount > 0) {
-    if (desc.includes('salary') || desc.includes('deposit') || desc.includes('payroll') || desc.includes('direct dep')) {
+    // Credit card payments
+    if (
+      desc.includes('payment thank you') ||
+      desc.includes('automatic payment') ||
+      desc.includes('autopay')
+    ) {
+      return 'Payment';
+    }
+
+    // Bank account income (payroll, salary)
+    if (desc.includes('salary') || desc.includes('payroll') || desc.includes('direct dep') && !desc.includes('transfer')) {
       return 'Income';
     }
+
+    // Transfers between accounts
     if (desc.includes('transfer') || desc.includes('venmo') || desc.includes('zelle') || desc.includes('paypal')) {
       return 'Transfer';
     }
+
+    // Refunds and returns from merchants
     if (desc.includes('refund') || desc.includes('return') || desc.includes('cashback')) {
-      return 'Income';
+      return 'Refund';
     }
-    return 'Income';
+
+    // CRITICAL: Default to Refund for credit cards (NOT Income!)
+    // Bank account deposits should be caught by payroll/salary above
+    return 'Refund';
   }
 
   // Transportation
