@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { track } from '@vercel/analytics';
 import { CategorizedTransaction, Category } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from '@/lib/constants';
 
@@ -16,6 +17,8 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
   const [editedTransactions, setEditedTransactions] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [feedbackGiven, setFeedbackGiven] = useState<Set<number>>(new Set());
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
 
   const handleCategoryChange = (index: number, newCategory: Category) => {
     // Mark as edited
@@ -25,6 +28,24 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
     if (onCategoryChange) {
       onCategoryChange(index, newCategory);
     }
+  };
+
+  const handleFeedback = (index: number, transaction: CategorizedTransaction) => {
+    // Mark feedback as given
+    setFeedbackGiven(new Set(feedbackGiven).add(index));
+
+    // Track event with Vercel Analytics
+    track('categorization_feedback', {
+      category: transaction.category,
+      confidence: transaction.confidence ? Math.round(transaction.confidence * 100) : 0,
+      // Hash description for privacy (first 3 chars + length)
+      descriptionHash: `${transaction.description.substring(0, 3).toLowerCase()}_${transaction.description.length}`,
+      wasEdited: editedTransactions.has(index),
+    });
+
+    // Show confirmation toast
+    setShowFeedbackToast(true);
+    setTimeout(() => setShowFeedbackToast(false), 3000);
   };
 
   const handleSort = (field: SortField) => {
@@ -115,6 +136,9 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Confidence
             </th>
+            <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Feedback
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -192,11 +216,60 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                     <span className="text-xs text-gray-400">-</span>
                   )}
                 </td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-center">
+                  {feedbackGiven.has(originalIndex) ? (
+                    <span className="text-xs text-green-600" title="Thanks for your feedback!">
+                      ✓
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleFeedback(originalIndex, transaction)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-100"
+                      title="Report incorrect categorization"
+                      aria-label="Report incorrect categorization"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V7m-7 7h2m6-7h1.5a2 2 0 011.5 2v2a2 2 0 01-1.5 2h-.5"
+                          transform="scale(1, -1) translate(0, -24)"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+
+      {/* Feedback Toast */}
+      {showFeedbackToast && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-up">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span className="font-medium">Thanks for your feedback!</span>
+        </div>
+      )}
     </div>
   );
 }

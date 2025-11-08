@@ -14,7 +14,7 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 - **Saves Time**: Categorize 100+ transactions in seconds, not hours
 - **Saves Money**: Smart caching reduces AI costs by 50-80%
 - **Protects Privacy**: Your data is never stored — processed in real-time only
-- **Works Everywhere**: Supports all major banks with 95% accuracy for Chase & Capital One
+- **Works Everywhere**: Supports CSV exports from major banks (Chase, Capital One, Wells Fargo, BofA, and more)
 
 ## ✨ Features
 
@@ -139,8 +139,8 @@ Transaction 2: "STARBUCKS #5678 SEATTLE"
 - **Capital One** (checking & credit card) - Uses built-in categories + smart grocery detection
 
 ### ⭐ Tier 2: Standard Support (85-90% Accuracy)
-- **Bank of America** (checking & credit card)
 - **Wells Fargo** (checking & credit card)
+- **Bank of America** (checking & credit card)* - *May have compatibility variations depending on export format*
 - **Citibank** (checking & credit card)
 - **Discover** (credit card)
 - **Any other bank** with CSV export

@@ -26,8 +26,8 @@ These banks provide basic transaction data (Date, Description, Amount) without c
 
 | Bank | Format | Category Column | Notes |
 |------|--------|----------------|-------|
-| **Bank of America** | Checking & Credit Card | No | Exports: Date, Description, Amount, Running Balance |
 | **Wells Fargo** | Checking & Credit Card | No | Exports: Date, Description, Amount |
+| **Bank of America** | Checking & Credit Card | No | Exports: Date, Description, Amount, Running Balance. *May have compatibility variations depending on export format* |
 | **Citibank** | Checking & Credit Card | No | Exports: Date, Description, Amount |
 | **Discover** | Credit Card | No | Exports: Date, Description, Amount |
 | **Any other bank** | CSV | No | As long as it has Date, Description, Amount |
@@ -68,14 +68,21 @@ Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit
 01/16/2024,01/17/2024,1234,PAYROLL,Income,,3500.00
 ```
 
-#### 3. Bank of America Format (Tier 2)
+#### 3. Wells Fargo Format (Tier 2)
+```csv
+Date,Amount,*,Description
+01/15/2024,-5.45,*,STARBUCKS COFFEE
+01/16/2024,3500.00,*,PAYROLL DEPOSIT
+```
+
+#### 4. Bank of America Format (Tier 2)
 ```csv
 Date,Description,Amount,Running Bal.
 01/15/2024,STARBUCKS,-5.45,1234.56
 01/16/2024,DIRECT DEPOSIT,3500.00,4734.56
 ```
 
-#### 4. Simple Format (Tier 2)
+#### 5. Simple Format (Tier 2)
 ```csv
 Date,Description,Amount
 2024-01-15,Starbucks Coffee,-5.45
@@ -129,8 +136,8 @@ Capital One categorizes both grocery stores and retail stores as "Merchandise". 
 |------|----------|--------|
 | Chase | 95%+ | Built-in categories + AI fallback |
 | Capital One | 95%+ | Built-in categories + AI fallback + grocery detection |
-| Bank of America | 85-90% | Expert rules + AI + merchant caching |
 | Wells Fargo | 85-90% | Expert rules + AI + merchant caching |
+| Bank of America | 85-90% | Expert rules + AI + merchant caching (*may vary by export format*) |
 | Citibank | 85-90% | Expert rules + AI + merchant caching |
 | Discover | 85-90% | Expert rules + AI + merchant caching |
 | Other banks | 85-90% | Expert rules + AI + merchant caching |
