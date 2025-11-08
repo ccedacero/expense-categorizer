@@ -137,7 +137,7 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
               Confidence
             </th>
             <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Report Bad
+              Wrong?
             </th>
           </tr>
         </thead>
@@ -225,8 +225,8 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                     <button
                       onClick={() => handleFeedback(originalIndex, transaction)}
                       className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-100"
-                      title="Downclick on bad categories"
-                      aria-label="Downclick on bad categories"
+                      title="Report incorrect category"
+                      aria-label="Report incorrect category"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
