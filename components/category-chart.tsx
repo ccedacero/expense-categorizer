@@ -243,7 +243,6 @@ export default function CategoryChart({
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-sm font-semibold text-gray-700">Top Categories</h3>
-              <span className="text-xs text-gray-500">(click any category below to filter)</span>
             </div>
             <div className="space-y-2">
               {summary.slice(0, 5).map((item) => (
