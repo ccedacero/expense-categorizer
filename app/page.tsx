@@ -314,6 +314,47 @@ export default function Home() {
               </button>
             </div>
 
+            {/* Info Banner - Explain Account Type Detection */}
+            {filteredTotals.isCreditCard ? (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-6">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💳</div>
+                  <div>
+                    <h3 className="font-semibold text-purple-900 mb-1">
+                      Credit Card Statement Detected
+                    </h3>
+                    <p className="text-sm text-purple-800">
+                      We detected this is a credit card statement because it has <strong>Payments</strong> but no <strong>Income</strong>.
+                      Your positive amounts are categorized as:
+                    </p>
+                    <ul className="text-sm text-purple-800 mt-2 ml-4 space-y-1">
+                      <li>• <strong>Payment</strong> - Money you sent to pay your credit card bill</li>
+                      <li>• <strong>Refund</strong> - Money merchants returned to your card</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : filteredTotals.income > 0 ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🏦</div>
+                  <div>
+                    <h3 className="font-semibold text-green-900 mb-1">
+                      Bank Account Statement Detected
+                    </h3>
+                    <p className="text-sm text-green-800">
+                      We detected this is a bank account statement because it has <strong>Income</strong> transactions.
+                      Your positive amounts are categorized as:
+                    </p>
+                    <ul className="text-sm text-green-800 mt-2 ml-4 space-y-1">
+                      <li>• <strong>Income</strong> - Money you earned (salary, deposits, etc.)</li>
+                      <li>• <strong>Payment</strong> - Money sent to pay bills or credit cards</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {/* Chart */}
             {result.summary.length > 0 && (
               <CategoryChart
