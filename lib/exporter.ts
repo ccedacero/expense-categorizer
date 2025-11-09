@@ -89,10 +89,96 @@ function escapeCsvValue(value: string): string {
 }
 
 /**
+ * Export to QuickBooks IIF format
+ * IIF (Intuit Interchange Format) is a tab-delimited format used by QuickBooks
+ */
+export function exportToQuickBooksIIF(transactions: CategorizedTransaction[]): string {
+  if (transactions.length === 0) {
+    return '';
+  }
+
+  let iif = '!TRNS\tTRNSID\tTRNSTYPE\tDATE\tACCNT\tNAME\tCLASS\tAMOUNT\tDOCNUM\tMEMO\n';
+  iif += '!SPL\tSPLID\tTRNSTYPE\tDATE\tACCNT\tNAME\tCLASS\tAMOUNT\tDOCNUM\tMEMO\n';
+  iif += '!ENDTRNS\n';
+
+  transactions.forEach((t, index) => {
+    const amount = Math.abs(t.amount);
+    const account = t.amount < 0 ? 'Expenses' : 'Income';
+
+    // Main transaction line
+    iif += `TRNS\t${index + 1}\tCHECK\t${t.date}\tChecking\t${escapeCsvValue(t.description)}\t${t.category}\t${t.amount < 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
+
+    // Split line (offsetting entry)
+    iif += `SPL\t${index + 1}\tCHECK\t${t.date}\t${account}:${t.category}\t${escapeCsvValue(t.description)}\t${t.category}\t${t.amount > 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
+
+    iif += 'ENDTRNS\n';
+  });
+
+  return iif;
+}
+
+/**
+ * Export to Xero CSV format
+ * Xero uses a simple CSV format for bank transactions
+ */
+export function exportToXeroCSV(transactions: CategorizedTransaction[]): string {
+  if (transactions.length === 0) {
+    return '';
+  }
+
+  let csv = '*Date,*Amount,Payee,Description,Reference,*Check Number,Tax Type,Tax Amount\n';
+
+  transactions.forEach((t) => {
+    const taxType = 'Tax Exempt';
+    const taxAmount = '0.00';
+    const checkNumber = '';
+
+    csv += `${t.date},${t.amount},"${escapeCsvValue(t.description)}","${t.category}","${escapeCsvValue(t.description)}",${checkNumber},${taxType},${taxAmount}\n`;
+  });
+
+  return csv;
+}
+
+/**
+ * Export to Wave Accounting CSV format
+ * Wave uses a simple CSV format similar to generic CSV
+ */
+export function exportToWaveCSV(transactions: CategorizedTransaction[]): string {
+  if (transactions.length === 0) {
+    return '';
+  }
+
+  let csv = 'Transaction Date,Description,Amount,Currency,Category\n';
+
+  transactions.forEach((t) => {
+    const category = t.category === 'Food & Dining' ? 'Meals and Entertainment' : t.category;
+    csv += `${t.date},"${escapeCsvValue(t.description)}",${t.amount},USD,"${category}"\n`;
+  });
+
+  return csv;
+}
+
+/**
  * Trigger browser download of CSV file
  */
 export function downloadCSV(csv: string, filename: string = 'categorized-expenses.csv'): void {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+/**
+ * Trigger browser download of any text file (CSV, IIF, etc.)
+ */
+export function downloadFile(content: string, filename: string, mimeType: string = 'text/plain;charset=utf-8;'): void {
+  const blob = new Blob([content], { type: mimeType });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
 
