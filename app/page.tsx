@@ -295,22 +295,35 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Social Proof */}
-            <div className="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 text-center">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="flex -space-x-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
-                </div>
-                <span className="text-2xl">⭐⭐⭐⭐⭐</span>
+            {/* Open Source & Privacy Community */}
+            <div className="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 text-center border-2 border-blue-200">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="text-3xl">🔓</span>
+                <h3 className="text-2xl font-bold text-gray-900">Open Source & Privacy-First</h3>
+                <span className="text-3xl">🔒</span>
               </div>
-              <p className="text-gray-700 font-semibold mb-2">
-                Join 500+ users who trust us with their expense categorization
+              <p className="text-gray-700 font-semibold mb-3">
+                Built by developers, for people who value privacy
               </p>
-              <p className="text-gray-600 text-sm">
-                &ldquo;Finally, a tool that respects my privacy and actually works!&rdquo; - Sarah K.
-              </p>
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                <span className="px-4 py-2 bg-white rounded-lg font-semibold text-gray-800 border-2 border-gray-200">
+                  ✓ MIT Licensed
+                </span>
+                <span className="px-4 py-2 bg-white rounded-lg font-semibold text-gray-800 border-2 border-gray-200">
+                  ✓ No Database
+                </span>
+                <span className="px-4 py-2 bg-white rounded-lg font-semibold text-gray-800 border-2 border-gray-200">
+                  ✓ No Tracking
+                </span>
+                <a
+                  href="https://github.com/ccedacero/expense-categorizer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  ⭐ Star on GitHub
+                </a>
+              </div>
             </div>
 
             {/* Comparison Table */}

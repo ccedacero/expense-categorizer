@@ -101,13 +101,6 @@ export default function RootLayout({
       "@type": "Organization",
       name: "AI Expense Categorizer Team",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "127",
-      bestRating: "5",
-      worstRating: "1",
-    },
   };
 
   return (
