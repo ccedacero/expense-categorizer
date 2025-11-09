@@ -1,0 +1,40 @@
+Date Found,Source URL,Community,Subreddit,Post Title,User Quote,Pain Category,Time Mentioned,Time Unit,Emotional Words,Problem Merchant,Trigger Event,Current Workaround,Upvotes,Comments,Notes,Priority
+2025-11-09,https://reddit.com/example,YNAB,r/ynab,"Example: Bank connection broke again","Example: My Amex connection broke and now I have 800 transactions to categorize by hand. I want to cry.",Time + Emotion,800,transactions,"want to cry, broke again",Amex,Bank connection broke,Setting everything to uncategorized,156,43,High-value quote shows scale of problem,High
+
+# Instructions for using this template:
+# 1. Open in Google Sheets or Excel
+# 2. Delete this instruction row and the example row
+# 3. For each Reddit post you find, add a new row with the data
+# 4. Fill in as many columns as possible - empty cells are OK
+# 5. Use consistent values for dropdown-style columns:
+#
+# Pain Category options:
+# - Time
+# - Merchant Names
+# - Rules Complexity
+# - AI Failures
+# - Setup Burden
+# - Review Time
+# - Emotional Burden
+# - Technical Limitations
+# - Giving Up
+#
+# Time Unit options:
+# - minutes
+# - hours
+# - days
+# - weeks
+# - transactions
+# - sessions
+#
+# Community options:
+# - YNAB
+# - Spreadsheet
+# - Monarch
+# - Tiller
+# - Personal Finance
+#
+# Priority options:
+# - High (great quote, high engagement)
+# - Medium (good quote, moderate engagement)
+# - Low (minor insight, low engagement)
