@@ -66,6 +66,26 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {/* Prominent Try Demo CTA */}
+      <div className="mb-6 text-center">
+        <button
+          onClick={loadSample}
+          disabled={isProcessing}
+          className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <span className="text-2xl">🎯</span>
+          Try Demo with Sample Data
+          <span className="text-2xl">✨</span>
+        </button>
+        <p className="text-sm text-gray-600 mt-2">
+          See it in action instantly • No signup required
+        </p>
+      </div>
+
+      <div className="text-center mb-4">
+        <span className="text-gray-500 text-sm font-medium">OR UPLOAD YOUR OWN</span>
+      </div>
+
       <div
         className={`border-2 border-dashed rounded-xl p-8 transition-colors ${
           isDragging
@@ -79,10 +99,10 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
         <div className="flex flex-col items-center gap-4">
           <div className="text-5xl">📊</div>
           <h2 className="text-xl font-semibold text-gray-800">
-            Upload, paste, or drag your transactions
+            Upload or paste your transactions
           </h2>
           <p className="text-gray-600 text-center max-w-md">
-            Supports CSV exports from credit cards and bank accounts (Chase, BofA, Capital One, etc.)
+            Supports CSV exports from all banks (Chase, Capital One, Bank of America, Wells Fargo, etc.)
           </p>
 
           {/* Hidden file input */}
@@ -119,22 +139,13 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             disabled={isProcessing}
           />
 
-          <div className="flex gap-3 w-full">
-            <button
-              onClick={handleSubmit}
-              disabled={!input.trim() || isProcessing}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-            >
-              {isProcessing ? '✨ Categorizing...' : '✨ Categorize with AI'}
-            </button>
-            <button
-              onClick={loadSample}
-              disabled={isProcessing}
-              className="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              📋 Load Sample
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!input.trim() || isProcessing}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          >
+            {isProcessing ? '✨ Categorizing...' : '✨ Categorize with AI - Free & Private'}
+          </button>
         </div>
       </div>
 

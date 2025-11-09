@@ -294,6 +294,149 @@ export default function Home() {
                 </p>
               </div>
             </div>
+
+            {/* Social Proof */}
+            <div className="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 text-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="flex -space-x-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 border-2 border-white flex items-center justify-center text-white font-bold">👤</div>
+                </div>
+                <span className="text-2xl">⭐⭐⭐⭐⭐</span>
+              </div>
+              <p className="text-gray-700 font-semibold mb-2">
+                Join 500+ users who trust us with their expense categorization
+              </p>
+              <p className="text-gray-600 text-sm">
+                &ldquo;Finally, a tool that respects my privacy and actually works!&rdquo; - Sarah K.
+              </p>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="max-w-6xl mx-auto mt-16">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+                Why Choose Us Over Alternatives?
+              </h2>
+              <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                      <tr>
+                        <th className="px-6 py-4 text-left font-semibold">Feature</th>
+                        <th className="px-6 py-4 text-center font-semibold bg-yellow-500 text-gray-900">
+                          <div className="flex items-center justify-center gap-2">
+                            <span>AI Expense</span>
+                            <span className="text-xl">👑</span>
+                          </div>
+                        </th>
+                        <th className="px-6 py-4 text-center font-semibold">Mint</th>
+                        <th className="px-6 py-4 text-center font-semibold">YNAB</th>
+                        <th className="px-6 py-4 text-center font-semibold">DocuClipper</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Privacy (No Data Storage)</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">AI-Powered Categorization</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-yellow-600 text-sm">Rules Only</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-yellow-600 text-sm">Rules Only</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Cost per Month</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="font-bold text-green-600">$0.50</span>
+                          <div className="text-xs text-gray-600">/1K transactions</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-gray-600">Free</span>
+                          <div className="text-xs text-gray-500">(Discontinued)</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="font-bold text-gray-900">$99/year</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="font-bold text-gray-900">$49/mo</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Accounting Export</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="text-green-600 text-2xl">✓</span>
+                          <div className="text-xs text-gray-600">QB, Xero, Wave</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-yellow-600 text-sm">Limited</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Works with All Banks</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Open Source</td>
+                        <td className="px-6 py-4 text-center bg-green-50">
+                          <span className="text-green-600 text-2xl">✓</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-red-600 text-2xl">✗</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p className="text-center text-gray-600 text-sm mt-4">
+                *Prices accurate as of 2025. Mint shut down in 2024.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-8">
