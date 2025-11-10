@@ -80,24 +80,6 @@ export default function BlogPage() {
             </Link>
           ))}
         </div>
-
-        {/* Coming Soon Section */}
-        <div className="mt-16 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 text-center border-2 border-blue-200">
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">
-            More guides coming soon!
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Want to learn about specific topics? Let us know on GitHub.
-          </p>
-          <a
-            href="https://github.com/ccedacero/expense-categorizer/discussions"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Request a Topic
-          </a>
-        </div>
       </main>
 
       {/* Footer */}
