@@ -102,7 +102,7 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             Upload or paste your transactions
           </h2>
           <p className="text-gray-600 text-center max-w-md">
-            Supports CSV exports from all banks (Chase, Capital One, Bank of America, Wells Fargo, etc.)
+            Supports CSV exports from all banks (Chase, Capital One, Wells Fargo, Bank of America, etc.)
           </p>
 
           {/* Hidden file input */}
