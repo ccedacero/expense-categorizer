@@ -11,25 +11,9 @@ const blogPosts = [
     slug: 'privacy-first-expense-tracking',
     title: 'How to Categorize Bank Transactions Without Compromising Privacy',
     excerpt: 'A complete guide to organizing your expenses while keeping your financial data secure. Learn why stateless processing matters and how to protect your privacy.',
-    date: '2025-01-09',
+    date: '2024-11-09',
     readTime: '8 min read',
     category: 'Privacy',
-  },
-  {
-    slug: 'quickbooks-vs-xero-vs-wave',
-    title: 'The Best CSV Transaction Categorizers for 2025',
-    excerpt: 'Compare top expense categorization tools including AI-powered solutions, traditional software, and privacy-focused alternatives.',
-    date: '2025-01-08',
-    readTime: '10 min read',
-    category: 'Comparisons',
-  },
-  {
-    slug: 'save-time-categorizing-expenses',
-    title: 'Stop Wasting Hours on Manual Expense Categorization',
-    excerpt: 'Learn how AI categorization can save you 50+ hours per year while maintaining 95% accuracy. Real cost-benefit analysis included.',
-    date: '2025-01-07',
-    readTime: '6 min read',
-    category: 'Productivity',
   },
 ];
 
