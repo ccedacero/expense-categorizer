@@ -89,6 +89,19 @@ function escapeCsvValue(value: string): string {
 }
 
 /**
+ * Sanitize category name for QuickBooks IIF format
+ * QuickBooks rejects account names with special characters like &, /, :, etc.
+ */
+function sanitizeQuickBooksCategory(category: string): string {
+  return category
+    .replace(/&/g, 'and')
+    .replace(/\//g, '-')
+    .replace(/:/g, '-')
+    .replace(/[^\w\s-]/g, '')
+    .trim();
+}
+
+/**
  * Export to QuickBooks IIF format
  * IIF (Intuit Interchange Format) is a tab-delimited format used by QuickBooks
  */
@@ -104,17 +117,47 @@ export function exportToQuickBooksIIF(transactions: CategorizedTransaction[]): s
   transactions.forEach((t, index) => {
     const amount = Math.abs(t.amount);
     const account = t.amount < 0 ? 'Expenses' : 'Income';
+    const sanitizedCategory = sanitizeQuickBooksCategory(t.category);
 
     // Main transaction line
-    iif += `TRNS\t${index + 1}\tCHECK\t${t.date}\tChecking\t${escapeCsvValue(t.description)}\t${t.category}\t${t.amount < 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
+    iif += `TRNS\t${index + 1}\tCHECK\t${t.date}\tChecking\t${escapeCsvValue(t.description)}\t${sanitizedCategory}\t${t.amount < 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
 
     // Split line (offsetting entry)
-    iif += `SPL\t${index + 1}\tCHECK\t${t.date}\t${account}:${t.category}\t${escapeCsvValue(t.description)}\t${t.category}\t${t.amount > 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
+    iif += `SPL\t${index + 1}\tCHECK\t${t.date}\t${account}:${sanitizedCategory}\t${escapeCsvValue(t.description)}\t${sanitizedCategory}\t${t.amount > 0 ? -amount : amount}\t\t${escapeCsvValue(t.description)}\n`;
 
     iif += 'ENDTRNS\n';
   });
 
   return iif;
+}
+
+/**
+ * Map our categories to Xero account codes/names
+ * Xero uses specific account names for proper categorization
+ */
+function mapToXeroAccount(category: string): string {
+  const xeroMapping: Record<string, string> = {
+    'Food & Dining': 'Entertainment',
+    'Transportation': 'Motor Vehicle Expenses',
+    'Shopping': 'General Expenses',
+    'Bills & Utilities': 'Utilities',
+    'Entertainment': 'Entertainment',
+    'Healthcare': 'Professional Fees',
+    'Travel': 'Travel - National',
+    'Groceries': 'Office Expenses',
+    'Household': 'Repairs and Maintenance',
+    'Education': 'Training',
+    'Business Expenses': 'General Expenses',
+    'Charity/Donations': 'Donations',
+    'Gift Cards': 'General Expenses',
+    'Income': 'Sales',
+    'Payment': 'Bank Fees',
+    'Refund': 'Other Income',
+    'Transfer': 'Owner Funds Introduced',
+    'Other': 'General Expenses',
+  };
+
+  return xeroMapping[category] || 'General Expenses';
 }
 
 /**
@@ -129,14 +172,45 @@ export function exportToXeroCSV(transactions: CategorizedTransaction[]): string 
   let csv = '*Date,*Amount,Payee,Description,Reference,*Check Number,Tax Type,Tax Amount\n';
 
   transactions.forEach((t) => {
+    const xeroAccount = mapToXeroAccount(t.category);
     const taxType = 'Tax Exempt';
     const taxAmount = '0.00';
     const checkNumber = '';
 
-    csv += `${t.date},${t.amount},"${escapeCsvValue(t.description)}","${t.category}","${escapeCsvValue(t.description)}",${checkNumber},${taxType},${taxAmount}\n`;
+    // Payee = merchant name, Description = category for Xero, Reference = original description
+    csv += `${t.date},${t.amount},"${escapeCsvValue(t.description)}","${xeroAccount}","${t.category}",${checkNumber},${taxType},${taxAmount}\n`;
   });
 
   return csv;
+}
+
+/**
+ * Map our categories to Wave Accounting categories
+ * Wave has specific category names - this ensures proper categorization
+ */
+function mapToWaveCategory(category: string): string {
+  const waveMapping: Record<string, string> = {
+    'Food & Dining': 'Meals and Entertainment',
+    'Transportation': 'Automobile',
+    'Shopping': 'Office Supplies and Software',
+    'Bills & Utilities': 'Utilities',
+    'Entertainment': 'Meals and Entertainment',
+    'Healthcare': 'Professional Fees',
+    'Travel': 'Travel',
+    'Groceries': 'Meals and Entertainment',
+    'Household': 'Repairs and Maintenance',
+    'Education': 'Education and Training',
+    'Business Expenses': 'Business Expenses',
+    'Charity/Donations': 'Charitable Contributions',
+    'Gift Cards': 'Other Expenses',
+    'Income': 'Income',
+    'Payment': 'Bank Fees and Charges',
+    'Refund': 'Other Income',
+    'Transfer': 'Owner Investment/Drawings',
+    'Other': 'Other Expenses',
+  };
+
+  return waveMapping[category] || category;
 }
 
 /**
@@ -151,8 +225,8 @@ export function exportToWaveCSV(transactions: CategorizedTransaction[]): string 
   let csv = 'Transaction Date,Description,Amount,Currency,Category\n';
 
   transactions.forEach((t) => {
-    const category = t.category === 'Food & Dining' ? 'Meals and Entertainment' : t.category;
-    csv += `${t.date},"${escapeCsvValue(t.description)}",${t.amount},USD,"${category}"\n`;
+    const waveCategory = mapToWaveCategory(t.category);
+    csv += `${t.date},"${escapeCsvValue(t.description)}",${t.amount},USD,"${waveCategory}"\n`;
   });
 
   return csv;

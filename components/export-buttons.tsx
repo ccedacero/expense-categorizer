@@ -45,9 +45,25 @@ export default function ExportButtons({ transactions, recurring }: ExportButtons
   };
 
   const handleCopyToClipboard = () => {
-    const csv = exportToCSV(transactions, recurring);
-    navigator.clipboard.writeText(csv);
-    alert('✅ Copied to clipboard!');
+    let content = '';
+
+    switch (selectedFormat) {
+      case 'csv':
+        content = exportToCSV(transactions, recurring);
+        break;
+      case 'quickbooks':
+        content = exportToQuickBooksIIF(transactions);
+        break;
+      case 'xero':
+        content = exportToXeroCSV(transactions);
+        break;
+      case 'wave':
+        content = exportToWaveCSV(transactions);
+        break;
+    }
+
+    navigator.clipboard.writeText(content);
+    alert(`✅ Copied ${formatLabels[selectedFormat]} to clipboard!`);
   };
 
   const formatLabels: Record<ExportFormat, string> = {
@@ -123,7 +139,7 @@ export default function ExportButtons({ transactions, recurring }: ExportButtons
           className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors shadow-lg hover:shadow-xl"
         >
           <span>📋</span>
-          Copy CSV
+          Copy to Clipboard
         </button>
       </div>
 
