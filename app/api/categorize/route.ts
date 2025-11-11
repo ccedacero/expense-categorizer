@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
   try {
     const startTime = Date.now();
     const body = await request.json();
-    const { input } = body;
+    const { input, userRules } = body;
 
     // Validation: Input exists and is a string
     if (!input || typeof input !== 'string') {
@@ -134,9 +134,9 @@ export async function POST(request: NextRequest) {
 
     const parseTime = Date.now() - startTime;
 
-    // Step 2: Categorize with AI
+    // Step 2: Categorize with AI (and user's learned rules)
     const aiStartTime = Date.now();
-    const result = await categorizeTransactions(parseResult.transactions);
+    const result = await categorizeTransactions(parseResult.transactions, userRules);
     const aiTime = Date.now() - aiStartTime;
     const totalTime = Date.now() - startTime;
 
