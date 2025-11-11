@@ -74,36 +74,54 @@ export async function categorizeTransactions(
 /**
  * Categorize with merchant caching for 50-80% cost reduction
  *
- * IMPORTANT: Transactions with originalCategory (from Capital One/Chase CSVs)
- * bypass the cache to ensure bank-provided categories are always respected.
+ * PRIORITY ORDER:
+ * 1. Bank categories (Capital One/Chase CSVs)
+ * 2. User-learned rules (from manual corrections)
+ * 3. Merchant cache (from previous AI calls)
+ * 4. AI categorization (Claude Haiku)
  */
 async function categorizeBatchWithCache(
   transactions: Transaction[]
 ): Promise<CategorizedTransaction[]> {
-  // Step 1: Separate transactions into those with/without bank categories
+  // Import learning rules (only in browser context)
+  const applyRules = typeof window !== 'undefined'
+    ? (await import('./learning-rules')).applyRules
+    : () => null;
+
+  // Step 1: Separate transactions by categorization method
   const withBankCategory: { transaction: Transaction; index: number }[] = [];
+  const learnedRules: CategorizedTransaction[] = [];
   const cached: CategorizedTransaction[] = [];
   const uncached: { transaction: Transaction; index: number }[] = [];
 
   transactions.forEach((transaction, index) => {
-    // PRIORITY: If transaction has originalCategory from bank, use smart rules
-    // This ensures Capital One/Chase categories are always respected
+    // PRIORITY 1: If transaction has originalCategory from bank, use smart rules
     if (transaction.originalCategory) {
       withBankCategory.push({ transaction, index });
       return;
     }
 
-    // For transactions without bank category, check cache
+    // PRIORITY 2: Check user-learned rules (highest user preference)
+    const ruleMatch = applyRules(transaction.description);
+    if (ruleMatch) {
+      learnedRules.push({
+        ...transaction,
+        category: ruleMatch.category,
+        confidence: 1.0, // User rules have maximum confidence
+      });
+      return;
+    }
+
+    // PRIORITY 3: Check merchant cache
     const cachedResult = getCachedCategory(transaction.description);
     if (cachedResult) {
-      // Cache hit! No AI call needed
       cached.push({
         ...transaction,
         category: cachedResult.category,
         confidence: cachedResult.confidence,
       });
     } else {
-      // Cache miss - need to categorize with AI
+      // PRIORITY 4: Need AI categorization
       uncached.push({ transaction, index });
     }
   });
@@ -182,6 +200,18 @@ async function categorizeBatchWithCache(
   // Add bank category results (now with AI overrides)
   withBankCategory.forEach(({ index }, resultIdx) => {
     resultMap.set(index, bankCategoryResults[resultIdx]);
+  });
+
+  // Add learned rules results
+  let learnedRulesIdx = 0;
+  transactions.forEach((transaction, index) => {
+    if (!transaction.originalCategory && !resultMap.has(index)) {
+      const ruleMatch = applyRules(transaction.description);
+      if (ruleMatch) {
+        resultMap.set(index, learnedRules[learnedRulesIdx]);
+        learnedRulesIdx++;
+      }
+    }
   });
 
   // Add cached results

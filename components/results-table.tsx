@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { track } from '@vercel/analytics';
 import { CategorizedTransaction, Category } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from '@/lib/constants';
+import { createOrUpdateRule } from '@/lib/learning-rules';
 
 interface ResultsTableProps {
   transactions: CategorizedTransaction[];
@@ -19,10 +20,27 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [feedbackGiven, setFeedbackGiven] = useState<Set<number>>(new Set());
   const [showFeedbackToast, setShowFeedbackToast] = useState(false);
+  const [ruleToast, setRuleToast] = useState<string | null>(null);
 
   const handleCategoryChange = (index: number, newCategory: Category) => {
+    const transaction = transactions[index];
+
     // Mark as edited
     setEditedTransactions(new Set(editedTransactions).add(index));
+
+    // Create or update learning rule
+    const { isNewRule, rule } = createOrUpdateRule(
+      transaction.description,
+      newCategory
+    );
+
+    // Show toast notification
+    const toastMessage = isNewRule
+      ? `✓ Rule created: All "${rule.merchantPattern}" → ${newCategory}`
+      : `✓ Rule updated: "${rule.merchantPattern}" → ${newCategory}`;
+
+    setRuleToast(toastMessage);
+    setTimeout(() => setRuleToast(null), 3000);
 
     // Notify parent component
     if (onCategoryChange) {
@@ -268,6 +286,14 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
             />
           </svg>
           <span className="font-medium">Thanks for your feedback!</span>
+        </div>
+      )}
+
+      {/* Rule Learning Toast */}
+      {ruleToast && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-up max-w-md">
+          <span className="text-lg font-bold">✓</span>
+          <span className="font-medium text-sm">{ruleToast}</span>
         </div>
       )}
     </div>
