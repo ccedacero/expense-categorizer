@@ -32,7 +32,8 @@ const anthropic = new Anthropic({
 });
 
 export async function categorizeTransactions(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  userRules?: any[] // User's learned rules from localStorage
 ): Promise<CategorizationResult> {
   if (transactions.length === 0) {
     return {
@@ -44,7 +45,7 @@ export async function categorizeTransactions(
   }
 
   // Try AI with caching first, fall back to expert rules
-  const categorized = await categorizeBatchWithCache(transactions);
+  const categorized = await categorizeBatchWithCache(transactions, userRules);
 
   // Calculate summary (properly handling credit cards)
   const summary = calculateSummary(categorized);
@@ -74,36 +75,76 @@ export async function categorizeTransactions(
 /**
  * Categorize with merchant caching for 50-80% cost reduction
  *
- * IMPORTANT: Transactions with originalCategory (from Capital One/Chase CSVs)
- * bypass the cache to ensure bank-provided categories are always respected.
+ * PRIORITY ORDER:
+ * 1. User-learned rules (from manual corrections) - HIGHEST PRIORITY
+ * 2. Bank categories (Capital One/Chase CSVs)
+ * 3. Merchant cache (from previous AI calls)
+ * 4. AI categorization (Claude Haiku)
  */
 async function categorizeBatchWithCache(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  userRules?: any[]
 ): Promise<CategorizedTransaction[]> {
-  // Step 1: Separate transactions into those with/without bank categories
+  // Create applyRules function from passed userRules
+  const applyRules = (description: string) => {
+    if (!userRules || userRules.length === 0) return null;
+
+    // Normalize merchant name for matching
+    const normalized = normalizeMerchantForRules(description);
+
+    // Find matching rule
+    const matchingRule = userRules.find(
+      (rule: any) => rule.merchantPattern === normalized
+    );
+
+    if (matchingRule) {
+      return {
+        category: matchingRule.category,
+        rule: matchingRule,
+      };
+    }
+
+    return null;
+  };
+
+  // Step 1: Separate transactions by categorization method
   const withBankCategory: { transaction: Transaction; index: number }[] = [];
+  const learnedRules: { transaction: CategorizedTransaction; index: number }[] = [];
   const cached: CategorizedTransaction[] = [];
   const uncached: { transaction: Transaction; index: number }[] = [];
 
   transactions.forEach((transaction, index) => {
-    // PRIORITY: If transaction has originalCategory from bank, use smart rules
-    // This ensures Capital One/Chase categories are always respected
+    // PRIORITY 1: Check user-learned rules FIRST (highest user preference)
+    // User explicitly taught the system, so their preference wins over everything
+    const ruleMatch = applyRules(transaction.description);
+    if (ruleMatch) {
+      learnedRules.push({
+        transaction: {
+          ...transaction,
+          category: ruleMatch.category,
+          confidence: 1.0, // User rules have maximum confidence
+        },
+        index,
+      });
+      return;
+    }
+
+    // PRIORITY 2: If transaction has originalCategory from bank, use smart rules
     if (transaction.originalCategory) {
       withBankCategory.push({ transaction, index });
       return;
     }
 
-    // For transactions without bank category, check cache
+    // PRIORITY 3: Check merchant cache
     const cachedResult = getCachedCategory(transaction.description);
     if (cachedResult) {
-      // Cache hit! No AI call needed
       cached.push({
         ...transaction,
         category: cachedResult.category,
         confidence: cachedResult.confidence,
       });
     } else {
-      // Cache miss - need to categorize with AI
+      // PRIORITY 4: Need AI categorization
       uncached.push({ transaction, index });
     }
   });
@@ -130,6 +171,17 @@ async function categorizeBatchWithCache(
     // Combine all results in original order
     const resultMap = new Map<number, CategorizedTransaction>();
 
+    // Add bank category results
+    withBankCategory.forEach(({ index }, resultIdx) => {
+      resultMap.set(index, bankCategoryResults[resultIdx]);
+    });
+
+    // Add learned rules results
+    learnedRules.forEach(({ transaction, index }) => {
+      resultMap.set(index, transaction);
+    });
+
+    // Add cached results
     cached.forEach((result, idx) => {
       // Find original index for cached results
       transactions.forEach((t, originalIdx) => {
@@ -137,10 +189,6 @@ async function categorizeBatchWithCache(
           resultMap.set(originalIdx, result);
         }
       });
-    });
-
-    withBankCategory.forEach(({ index }, resultIdx) => {
-      resultMap.set(index, bankCategoryResults[resultIdx]);
     });
 
     return transactions.map((_, index) => resultMap.get(index)!);
@@ -182,6 +230,11 @@ async function categorizeBatchWithCache(
   // Add bank category results (now with AI overrides)
   withBankCategory.forEach(({ index }, resultIdx) => {
     resultMap.set(index, bankCategoryResults[resultIdx]);
+  });
+
+  // Add learned rules results
+  learnedRules.forEach(({ transaction, index }) => {
+    resultMap.set(index, transaction);
   });
 
   // Add cached results
@@ -785,6 +838,53 @@ function expertCategorize(t: Transaction): Category {
   // ===================
 
   return 'Other';
+}
+
+/**
+ * Normalize merchant name for rule matching
+ * Same logic as in learning-rules.ts - MUST stay in sync!
+ */
+function normalizeMerchantForRules(description: string): string {
+  const lower = description.toLowerCase();
+
+  // Important context keywords that should ALWAYS be preserved for rule specificity
+  const contextKeywords = [
+    'payment', 'fee', 'membership', 'refund', 'return', 'charge',
+    'interest', 'annual', 'monthly', 'subscription', 'autopay',
+    'transfer', 'deposit', 'withdrawal', 'credit', 'debit',
+    'recurring', 'one-time', 'purchase', 'bill', 'invoice'
+  ];
+
+  // Clean up the description
+  let cleaned = lower
+    .replace(/[#]\w+/g, '') // Remove #1234 order IDs
+    .replace(/\$[\d,.]+/g, '') // Remove dollar amounts
+    .replace(/\d{2,}/g, '') // Remove long numbers
+    .replace(/\b(inc|llc|ltd|corp|co|store|shop)\b/g, '') // Remove company suffixes
+    .replace(/[^a-z\s]/g, '') // Keep only letters and spaces
+    .trim();
+
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+
+  if (words.length === 0) {
+    return description.toLowerCase().slice(0, 20);
+  }
+
+  // Check if any context keywords are present
+  const contextWords = words.filter(w => contextKeywords.includes(w));
+
+  // Strategy:
+  // - If context keywords exist, include them (e.g., "capital one payment")
+  // - Otherwise, take first 2 words (e.g., "starbucks")
+  if (contextWords.length > 0) {
+    // Take first 2-3 words for merchant + context keywords
+    const merchantWords = words.slice(0, 3);
+    const combined = [...new Set([...merchantWords, ...contextWords])];
+    return combined.slice(0, 4).join(' ').trim();
+  }
+
+  // No context keywords - simple merchant name
+  return words.slice(0, 2).join(' ').trim();
 }
 
 // calculateSummary moved to lib/summary.ts to avoid importing Anthropic SDK in browser
