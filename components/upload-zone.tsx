@@ -14,14 +14,65 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const readFile = useCallback((file: File) => {
-    if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        setInput(text);
-      };
-      reader.readAsText(file);
+    const fileName = file.name.toLowerCase();
+    const extension = fileName.split('.').pop();
+
+    // Check if file type is supported
+    const supportedExtensions = ['csv', 'xlsx', 'xls', 'ofx', 'qfx', 'txt'];
+    const isSupportedFile =
+      supportedExtensions.includes(extension || '') ||
+      file.type === 'text/csv' ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel' ||
+      file.type === 'application/x-ofx';
+
+    if (!isSupportedFile) {
+      alert(`❌ Unsupported file type: ${extension}\n\nSupported formats: CSV, XLSX, XLS, OFX, QFX`);
+      return;
     }
+
+    // Check file size (5MB limit)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      alert(
+        `❌ File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB\n\nMaximum size: 5MB\n\nTip: Try splitting your file into smaller chunks.`
+      );
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      alert('❌ Failed to read file. Please try again.');
+    };
+
+    // Handle Excel files (need binary reading)
+    if (extension === 'xlsx' || extension === 'xls') {
+      reader.onload = (event) => {
+        const arrayBuffer = event.target?.result as ArrayBuffer;
+        // Import parser dynamically to avoid SSR issues
+        import('@/lib/parser').then(({ parseTransactionsFromFile }) => {
+          const result = parseTransactionsFromFile(arrayBuffer, file.name);
+
+          if (result.rawCSV) {
+            // Excel was converted to CSV successfully
+            setInput(result.rawCSV);
+          } else if (result.errors.length > 0) {
+            alert(`❌ Failed to parse Excel file:\n\n${result.errors.join('\n')}`);
+          } else {
+            alert('❌ Failed to parse Excel file. Please check the file format.');
+          }
+        });
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // Handle text-based files (CSV, OFX, TXT)
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setInput(text);
+    };
+    reader.readAsText(file);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -102,14 +153,17 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             Upload or paste your transactions
           </h2>
           <p className="text-gray-600 text-center max-w-md">
-            Supports CSV exports from all banks (Chase, Capital One, Wells Fargo, Bank of America, etc.)
+            Supports CSV, Excel (.xlsx, .xls), OFX, and QFX files from any bank
+          </p>
+          <p className="text-sm text-gray-500 text-center max-w-lg">
+            Works with Chase, Capital One, Wells Fargo, Bank of America, Citibank, and all other banks
           </p>
 
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.xlsx,.xls,.ofx,.qfx,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/x-ofx"
             onChange={handleFileSelect}
             className="hidden"
             disabled={isProcessing}
@@ -121,7 +175,7 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             disabled={isProcessing}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
           >
-            📁 Upload CSV File
+            📁 Upload File (CSV, Excel, OFX, QFX)
           </button>
 
           {/* Separator */}
