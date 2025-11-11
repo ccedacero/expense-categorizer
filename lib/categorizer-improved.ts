@@ -76,8 +76,8 @@ export async function categorizeTransactions(
  * Categorize with merchant caching for 50-80% cost reduction
  *
  * PRIORITY ORDER:
- * 1. Bank categories (Capital One/Chase CSVs)
- * 2. User-learned rules (from manual corrections)
+ * 1. User-learned rules (from manual corrections) - HIGHEST PRIORITY
+ * 2. Bank categories (Capital One/Chase CSVs)
  * 3. Merchant cache (from previous AI calls)
  * 4. AI categorization (Claude Haiku)
  */
@@ -114,13 +114,8 @@ async function categorizeBatchWithCache(
   const uncached: { transaction: Transaction; index: number }[] = [];
 
   transactions.forEach((transaction, index) => {
-    // PRIORITY 1: If transaction has originalCategory from bank, use smart rules
-    if (transaction.originalCategory) {
-      withBankCategory.push({ transaction, index });
-      return;
-    }
-
-    // PRIORITY 2: Check user-learned rules (highest user preference)
+    // PRIORITY 1: Check user-learned rules FIRST (highest user preference)
+    // User explicitly taught the system, so their preference wins over everything
     const ruleMatch = applyRules(transaction.description);
     if (ruleMatch) {
       learnedRules.push({
@@ -131,6 +126,12 @@ async function categorizeBatchWithCache(
         },
         index,
       });
+      return;
+    }
+
+    // PRIORITY 2: If transaction has originalCategory from bank, use smart rules
+    if (transaction.originalCategory) {
+      withBankCategory.push({ transaction, index });
       return;
     }
 
