@@ -32,7 +32,8 @@ const anthropic = new Anthropic({
 });
 
 export async function categorizeTransactions(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  userRules?: any[] // User's learned rules from localStorage
 ): Promise<CategorizationResult> {
   if (transactions.length === 0) {
     return {
@@ -44,7 +45,7 @@ export async function categorizeTransactions(
   }
 
   // Try AI with caching first, fall back to expert rules
-  const categorized = await categorizeBatchWithCache(transactions);
+  const categorized = await categorizeBatchWithCache(transactions, userRules);
 
   // Calculate summary (properly handling credit cards)
   const summary = calculateSummary(categorized);
@@ -81,12 +82,30 @@ export async function categorizeTransactions(
  * 4. AI categorization (Claude Haiku)
  */
 async function categorizeBatchWithCache(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  userRules?: any[]
 ): Promise<CategorizedTransaction[]> {
-  // Import learning rules (only in browser context)
-  const applyRules = typeof window !== 'undefined'
-    ? (await import('./learning-rules')).applyRules
-    : () => null;
+  // Create applyRules function from passed userRules
+  const applyRules = (description: string) => {
+    if (!userRules || userRules.length === 0) return null;
+
+    // Normalize merchant name for matching
+    const normalized = normalizeMerchantForRules(description);
+
+    // Find matching rule
+    const matchingRule = userRules.find(
+      (rule: any) => rule.merchantPattern === normalized
+    );
+
+    if (matchingRule) {
+      return {
+        category: matchingRule.category,
+        rule: matchingRule,
+      };
+    }
+
+    return null;
+  };
 
   // Step 1: Separate transactions by categorization method
   const withBankCategory: { transaction: Transaction; index: number }[] = [];
@@ -815,6 +834,24 @@ function expertCategorize(t: Transaction): Category {
   // ===================
 
   return 'Other';
+}
+
+/**
+ * Normalize merchant name for rule matching
+ * Same logic as in learning-rules.ts
+ */
+function normalizeMerchantForRules(description: string): string {
+  return description
+    .toLowerCase()
+    .replace(/[#]\w+/g, '') // Remove #1234 order IDs
+    .replace(/\d{2,}/g, '') // Remove long numbers
+    .replace(/\b(inc|llc|ltd|corp|co|store|shop)\b/g, '') // Remove company suffixes
+    .replace(/[^a-z\s]/g, '') // Keep only letters and spaces
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2) // Take first 2 words
+    .join(' ')
+    .trim();
 }
 
 // calculateSummary moved to lib/summary.ts to avoid importing Anthropic SDK in browser

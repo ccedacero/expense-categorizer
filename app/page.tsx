@@ -28,12 +28,19 @@ export default function Home() {
     setTransactionCount(estimatedCount);
 
     try {
+      // Get user's learned rules from localStorage
+      const { getRules } = await import('@/lib/learning-rules');
+      const userRules = getRules();
+
       const response = await fetch('/api/categorize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({
+          input,
+          userRules, // Send rules to server
+        }),
       });
 
       const data = await response.json();
