@@ -42,6 +42,7 @@ export default function RulesPage() {
     if (confirm('Delete this rule? Future transactions will not be auto-categorized with this rule.')) {
       deleteRule(ruleId);
       loadRules();
+      window.dispatchEvent(new Event('rulesUpdated'));
     }
   };
 
@@ -49,6 +50,7 @@ export default function RulesPage() {
     clearAllRules();
     setRules([]);
     setShowClearConfirm(false);
+    window.dispatchEvent(new Event('rulesUpdated'));
   };
 
   const handleExport = () => {
@@ -74,6 +76,7 @@ export default function RulesPage() {
       if (result.success) {
         setImportStatus(`✅ Successfully imported ${result.imported} new rules`);
         loadRules();
+        window.dispatchEvent(new Event('rulesUpdated'));
       } else {
         setImportStatus(`❌ Error: ${result.error}`);
       }

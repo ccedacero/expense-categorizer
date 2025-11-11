@@ -42,6 +42,9 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
     setRuleToast(toastMessage);
     setTimeout(() => setRuleToast(null), 3000);
 
+    // Trigger custom event for RulesBadge to update
+    window.dispatchEvent(new Event('rulesUpdated'));
+
     // Notify parent component
     if (onCategoryChange) {
       onCategoryChange(index, newCategory);
@@ -218,18 +221,28 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                   {transaction.confidence ? (
-                    <span
-                      className={`text-xs ${
-                        transaction.confidence >= 0.9
-                          ? 'text-green-600'
-                          : transaction.confidence >= 0.7
-                          ? 'text-yellow-600'
-                          : 'text-orange-600'
-                      }`}
-                      title="AI confidence score"
-                    >
-                      {(transaction.confidence * 100).toFixed(0)}%
-                    </span>
+                    transaction.confidence === 1.0 ? (
+                      <span
+                        className="text-xs text-blue-600 font-semibold flex items-center justify-center gap-1"
+                        title="Categorized by learned rule"
+                      >
+                        <span>📚</span>
+                        Rule
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-xs ${
+                          transaction.confidence >= 0.9
+                            ? 'text-green-600'
+                            : transaction.confidence >= 0.7
+                            ? 'text-yellow-600'
+                            : 'text-orange-600'
+                        }`}
+                        title="AI confidence score"
+                      >
+                        {(transaction.confidence * 100).toFixed(0)}%
+                      </span>
+                    )
                   ) : (
                     <span className="text-xs text-gray-400">-</span>
                   )}
