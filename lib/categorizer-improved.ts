@@ -109,7 +109,7 @@ async function categorizeBatchWithCache(
 
   // Step 1: Separate transactions by categorization method
   const withBankCategory: { transaction: Transaction; index: number }[] = [];
-  const learnedRules: CategorizedTransaction[] = [];
+  const learnedRules: { transaction: CategorizedTransaction; index: number }[] = [];
   const cached: CategorizedTransaction[] = [];
   const uncached: { transaction: Transaction; index: number }[] = [];
 
@@ -124,9 +124,12 @@ async function categorizeBatchWithCache(
     const ruleMatch = applyRules(transaction.description);
     if (ruleMatch) {
       learnedRules.push({
-        ...transaction,
-        category: ruleMatch.category,
-        confidence: 1.0, // User rules have maximum confidence
+        transaction: {
+          ...transaction,
+          category: ruleMatch.category,
+          confidence: 1.0, // User rules have maximum confidence
+        },
+        index,
       });
       return;
     }
@@ -167,6 +170,17 @@ async function categorizeBatchWithCache(
     // Combine all results in original order
     const resultMap = new Map<number, CategorizedTransaction>();
 
+    // Add bank category results
+    withBankCategory.forEach(({ index }, resultIdx) => {
+      resultMap.set(index, bankCategoryResults[resultIdx]);
+    });
+
+    // Add learned rules results
+    learnedRules.forEach(({ transaction, index }) => {
+      resultMap.set(index, transaction);
+    });
+
+    // Add cached results
     cached.forEach((result, idx) => {
       // Find original index for cached results
       transactions.forEach((t, originalIdx) => {
@@ -174,10 +188,6 @@ async function categorizeBatchWithCache(
           resultMap.set(originalIdx, result);
         }
       });
-    });
-
-    withBankCategory.forEach(({ index }, resultIdx) => {
-      resultMap.set(index, bankCategoryResults[resultIdx]);
     });
 
     return transactions.map((_, index) => resultMap.get(index)!);
@@ -222,15 +232,8 @@ async function categorizeBatchWithCache(
   });
 
   // Add learned rules results
-  let learnedRulesIdx = 0;
-  transactions.forEach((transaction, index) => {
-    if (!transaction.originalCategory && !resultMap.has(index)) {
-      const ruleMatch = applyRules(transaction.description);
-      if (ruleMatch) {
-        resultMap.set(index, learnedRules[learnedRulesIdx]);
-        learnedRulesIdx++;
-      }
-    }
+  learnedRules.forEach(({ transaction, index }) => {
+    resultMap.set(index, transaction);
   });
 
   // Add cached results
