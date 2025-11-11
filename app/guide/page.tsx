@@ -52,9 +52,9 @@ export default function GuidePage() {
                   1
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Upload Your File</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Upload Your CSV File</h3>
                   <p className="text-gray-600 text-sm">
-                    Drag & drop or click to upload CSV, Excel (.xlsx, .xls), or OFX/QFX files from your bank.
+                    Drag & drop or click to upload CSV files from your bank.
                   </p>
                 </div>
               </div>
@@ -165,65 +165,6 @@ export default function GuidePage() {
                     <span>Delete rules: Remove individual rules or clear all</span>
                   </li>
                 </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* File Format Support */}
-          <section className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl">📁</span>
-              <h2 className="text-2xl font-bold text-gray-900">File Format Support</h2>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                The app automatically detects and processes multiple file formats:
-              </p>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-900">CSV</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Standard format from all banks. Works with any CSV containing Date, Description, Amount.
-                  </p>
-                </div>
-
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-900">Excel</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    .xlsx and .xls files. Automatically converted to CSV format for processing.
-                  </p>
-                </div>
-
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-900">OFX/QFX</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Financial exchange formats from Quicken, Money, and banking software.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">Supported Banks:</h3>
-                <p className="text-sm text-gray-600">
-                  Chase, Capital One, Wells Fargo, Bank of America, Citibank, Discover, and any bank that exports CSV, Excel, or OFX.
-                </p>
               </div>
             </div>
           </section>

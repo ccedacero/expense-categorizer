@@ -27,7 +27,6 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 - 📚 **Learning Rules Engine**: Auto-creates pattern-matching rules from your corrections
 - 🔍 **Smart Search**: Filter transactions by description, category, amount, or date
 - 🔄 **Recurring Detection**: Automatically finds subscriptions and recurring expenses
-- ✂️ **Split Transactions**: Divide transactions across multiple categories (backend support)
 
 ### Cost-Optimized
 - ⚡ **50-80% Cost Reduction**: Intelligent merchant caching
@@ -157,13 +156,6 @@ Transaction 2: "STARBUCKS #5678 SEATTLE"
 
 ## 📊 Supported Banks & Formats
 
-### 📁 File Format Support
-- **CSV** - Standard comma-separated values
-- **Excel** - .xlsx and .xls files (converted automatically)
-- **OFX/QFX** - Financial data exchange formats (Quicken, Money)
-
-The app automatically detects your file format! Minimum requirements: Date, Description, Amount.
-
 ### ⭐ Tier 1: Premium Support (95%+ Accuracy)
 - **Chase** (checking & credit card) - Uses built-in categories
 - **Capital One** (checking & credit card) - Uses built-in categories + smart grocery detection
@@ -173,13 +165,13 @@ The app automatically detects your file format! Minimum requirements: Date, Desc
 - **Bank of America** (checking & credit card)* - *May have compatibility variations depending on export format*
 - **Citibank** (checking & credit card)
 - **Discover** (credit card)
-- **Any other bank** with CSV/Excel/OFX export
+- **Any other bank** with CSV export
 
 **→ See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for complete compatibility details**
 
 ### Format Examples
 
-The app automatically detects your file format! Works with CSV, Excel, and OFX.
+The app automatically detects your CSV format! Minimum requirements: Date, Description, Amount.
 
 **Chase CSV** (with categories):
 ```csv
@@ -334,13 +326,13 @@ npm run build
 - ✅ AI categorization with Claude Haiku
 - ✅ Merchant pattern caching
 - ✅ **Learning Rules Engine** (auto-creates rules from corrections)
-- ✅ **Multi-format support** (CSV, Excel, OFX/QFX)
 - ✅ **Smart search** (filter by description, category, amount, date)
 - ✅ **Rules management** (view, export, import, delete at /rules)
 - ✅ Privacy-first architecture
 - ✅ Production deployment ready
 
 ### Planned Features (v1.2)
+- [ ] Multi-format support (Excel, OFX/QFX)
 - [ ] Bulk file upload (multiple CSVs at once)
 - [ ] Custom category creation
 - [ ] Export to QuickBooks/Mint format
@@ -373,11 +365,8 @@ A: Currently supports 14 predefined categories. Custom categories planned for v1
 **Q: Does it remember my corrections?**
 A: Yes! The Learning Rules Engine auto-creates pattern-matching rules from your corrections. Visit `/rules` to manage them.
 
-**Q: What file formats are supported?**
-A: CSV, Excel (.xlsx, .xls), and OFX/QFX. The app auto-detects the format.
-
 **Q: Does it work with my bank?**
-A: Yes! Works with any bank that exports CSV, Excel, or OFX. See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for compatibility details.
+A: Yes! Works with any bank that exports CSV. See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for compatibility details.
 
 **Q: Can I self-host?**
 A: Yes! See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for Docker and self-hosting guides.
