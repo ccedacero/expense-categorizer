@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { track } from '@vercel/analytics';
 import { CategorizedTransaction, Category } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from '@/lib/constants';
@@ -21,6 +21,29 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
   const [feedbackGiven, setFeedbackGiven] = useState<Set<number>>(new Set());
   const [showFeedbackToast, setShowFeedbackToast] = useState(false);
   const [ruleToast, setRuleToast] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [showRulesTip, setShowRulesTip] = useState(false);
+
+  // Check if user has dismissed the rules tip
+  useEffect(() => {
+    const dismissed = localStorage.getItem('rulesTipDismissed');
+    setShowRulesTip(!dismissed);
+  }, []);
+
+  // Debounce search query for performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleDismissTip = () => {
+    localStorage.setItem('rulesTipDismissed', 'true');
+    setShowRulesTip(false);
+  };
 
   const handleCategoryChange = (index: number, newCategory: Category) => {
     const transaction = transactions[index];
@@ -80,51 +103,165 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
     }
   };
 
-  // Sort transactions and track original indices
-  const { sortedTransactions, indexMap } = useMemo(() => {
+  // Filter and sort transactions, track original indices
+  const { sortedTransactions, indexMap, totalCount, filteredCount } = useMemo(() => {
+    const totalCount = transactions.length;
+
     // Create array of transactions with their original indices
-    const transactionsWithIndices = transactions.map((transaction, originalIndex) => ({
+    let transactionsWithIndices = transactions.map((transaction, originalIndex) => ({
       transaction,
       originalIndex,
     }));
 
-    if (!sortField) {
-      return {
-        sortedTransactions: transactions,
-        indexMap: transactions.map((_, i) => i),
-      };
+    // Apply search filter if query exists
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim();
+      transactionsWithIndices = transactionsWithIndices.filter(({ transaction }) => {
+        // Search across multiple fields
+        const description = transaction.description.toLowerCase();
+        const category = transaction.category.toLowerCase();
+        const amount = Math.abs(transaction.amount).toFixed(2);
+        const date = new Date(transaction.date).toLocaleDateString().toLowerCase();
+
+        return (
+          description.includes(query) ||
+          category.includes(query) ||
+          amount.includes(query) ||
+          date.includes(query)
+        );
+      });
     }
 
-    // Sort while maintaining original index information
-    const sorted = [...transactionsWithIndices].sort((a, b) => {
-      let comparison = 0;
+    const filteredCount = transactionsWithIndices.length;
 
-      if (sortField === 'date') {
-        const dateA = new Date(a.transaction.date).getTime();
-        const dateB = new Date(b.transaction.date).getTime();
-        comparison = dateA - dateB;
-      } else if (sortField === 'category') {
-        comparison = a.transaction.category.localeCompare(b.transaction.category);
-      } else if (sortField === 'amount') {
-        comparison = a.transaction.amount - b.transaction.amount;
-      }
+    // Apply sorting if field is selected
+    if (sortField) {
+      transactionsWithIndices.sort((a, b) => {
+        let comparison = 0;
 
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
+        if (sortField === 'date') {
+          const dateA = new Date(a.transaction.date).getTime();
+          const dateB = new Date(b.transaction.date).getTime();
+          comparison = dateA - dateB;
+        } else if (sortField === 'category') {
+          comparison = a.transaction.category.localeCompare(b.transaction.category);
+        } else if (sortField === 'amount') {
+          comparison = a.transaction.amount - b.transaction.amount;
+        }
+
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
 
     return {
-      sortedTransactions: sorted.map(item => item.transaction),
-      indexMap: sorted.map(item => item.originalIndex),
+      sortedTransactions: transactionsWithIndices.map(item => item.transaction),
+      indexMap: transactionsWithIndices.map(item => item.originalIndex),
+      totalCount,
+      filteredCount,
     };
-  }, [transactions, sortField, sortDirection]);
+  }, [transactions, sortField, sortDirection, debouncedSearchQuery]);
 
   const SortIndicator = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <span className="ml-1 text-gray-400">↕</span>;
     return <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>;
   };
+
   return (
-    <div className="w-full overflow-x-auto bg-white rounded-xl shadow-lg">
-      <table className="w-full">
+    <div className="w-full bg-white rounded-xl shadow-lg">
+      {/* Rules Learning Tip */}
+      {showRulesTip && (
+        <div className="mx-6 mt-6 mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-blue-900">
+              <span className="font-semibold">💡 Pro Tip:</span> Correcting categories creates personal pattern-matching rules.
+              Next time you upload, similar transactions will auto-categorize instantly.{' '}
+              <a href="/rules" className="font-medium underline hover:text-blue-700">
+                View your rules →
+              </a>
+            </p>
+          </div>
+          <button
+            onClick={handleDismissTip}
+            className="flex-shrink-0 text-blue-400 hover:text-blue-600 transition-colors"
+            aria-label="Dismiss tip"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Search Bar */}
+      <div className={`px-6 pb-4 border-b border-gray-200 ${showRulesTip ? 'pt-0' : 'pt-6'}`}>
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by description, category, amount, or date..."
+              className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                title="Clear search"
+              >
+                <svg
+                  className="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+          <div className="text-sm text-gray-600 whitespace-nowrap">
+            {filteredCount < totalCount ? (
+              <span>
+                Showing <span className="font-semibold text-blue-600">{filteredCount}</span> of{' '}
+                <span className="font-semibold">{totalCount}</span> transactions
+              </span>
+            ) : (
+              <span>
+                <span className="font-semibold">{totalCount}</span>{' '}
+                {totalCount === 1 ? 'transaction' : 'transactions'}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="bg-gray-50 border-b">
             <th
@@ -282,6 +419,39 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
           })}
         </tbody>
       </table>
+
+      {/* Empty State */}
+      {filteredCount === 0 && (
+        <div className="py-12 text-center">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <h3 className="mt-4 text-sm font-medium text-gray-900">No transactions found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Try adjusting your search query
+          </p>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      )}
+      </div>
 
       {/* Feedback Toast */}
       {showFeedbackToast && (

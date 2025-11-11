@@ -24,8 +24,9 @@ Stop manually categorizing hundreds of transactions every month. Our AI-powered 
 - 📊 **14 Categories**: Food & Dining, Transportation, Shopping, Healthcare, and more
 - 🔄 **Handles Edge Cases**: Correctly identifies payments, refunds, and transfers
 - ✏️ **Manual Editing**: Click any category to correct it — updates instantly
+- 📚 **Learning Rules Engine**: Auto-creates pattern-matching rules from your corrections
+- 🔍 **Smart Search**: Filter transactions by description, category, amount, or date
 - 🔄 **Recurring Detection**: Automatically finds subscriptions and recurring expenses
-- ✂️ **Split Transactions**: Divide transactions across multiple categories (backend support)
 
 ### Cost-Optimized
 - ⚡ **50-80% Cost Reduction**: Intelligent merchant caching
@@ -93,24 +94,45 @@ See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for Railway, Render, 
 
 ## 📖 How It Works
 
-### Smart 5-Priority Categorization System
+### Learning Rules Engine (Your Personal Autopilot)
+
+The app remembers your categorization preferences and auto-applies them:
+
+```
+1. First Upload
+   └─ Upload CSV → AI categorizes → You correct "Starbucks" to Food & Dining
+   └─ Rule auto-created: "starbucks" → Food & Dining ✓
+
+2. Second Upload
+   └─ Upload CSV → Rule matches "STARBUCKS #5678" → Instant categorization!
+   └─ No AI call needed → Faster & free
+
+3. Manage Rules
+   └─ View all rules at /rules page
+   └─ Export/import for backup
+   └─ Delete or edit patterns
+```
+
+**Smart Context Matching**: Rules preserve context keywords (fee, payment, subscription) to prevent false matches.
+
+### 5-Priority Categorization System
 
 Our categorizer uses an intelligent priority system for maximum accuracy:
 
 ```
-1. Payment Detection
-   └─ Identifies credit card payments vs account transfers
+1. User-Learned Rules (HIGHEST PRIORITY)
+   └─ Your personal corrections override everything
 
-2. Existing Categories
+2. Bank Categories
    └─ Uses your bank's categories when available (e.g., Chase CSV)
 
-3. Refund Handling
-   └─ Correctly categorizes positive amounts (refunds vs income)
+3. Merchant Cache
+   └─ Previously categorized merchants from AI calls
 
-4. Custom Keyword Rules
-   └─ Configurable patterns for specific merchants
+4. Payment/Transfer Detection
+   └─ Identifies credit card payments vs account transfers
 
-5. AI Categorization
+5. AI Categorization (FALLBACK)
    └─ Claude AI analyzes unknown transactions
 ```
 
@@ -300,15 +322,18 @@ npm run build
 
 ## 🗺️ Roadmap
 
-### Current Version (v1.0)
+### Current Version (v1.1) ✨ NEW
 - ✅ AI categorization with Claude Haiku
 - ✅ Merchant pattern caching
-- ✅ Multi-format CSV support
+- ✅ **Learning Rules Engine** (auto-creates rules from corrections)
+- ✅ **Smart search** (filter by description, category, amount, date)
+- ✅ **Rules management** (view, export, import, delete at /rules)
 - ✅ Privacy-first architecture
 - ✅ Production deployment ready
 
-### Planned Features (v1.1)
-- [ ] Bulk CSV upload (multiple files)
+### Planned Features (v1.2)
+- [ ] Multi-format support (Excel, OFX/QFX)
+- [ ] Bulk file upload (multiple CSVs at once)
 - [ ] Custom category creation
 - [ ] Export to QuickBooks/Mint format
 - [ ] Multi-currency support
@@ -335,7 +360,10 @@ A: 95%+ for Chase & Capital One (built-in categories), 85-90% for other banks (A
 A: ~$0.50 per 1,000 transactions with merchant caching. New users get $5 free credits.
 
 **Q: Can I use my own categories?**
-A: Currently supports 14 predefined categories. Custom categories planned for v1.1.
+A: Currently supports 14 predefined categories. Custom categories planned for v1.2.
+
+**Q: Does it remember my corrections?**
+A: Yes! The Learning Rules Engine auto-creates pattern-matching rules from your corrections. Visit `/rules` to manage them.
 
 **Q: Does it work with my bank?**
 A: Yes! Works with any bank that exports CSV. See [BANK_SUPPORT.md](./BANK_SUPPORT.md) for compatibility details.
