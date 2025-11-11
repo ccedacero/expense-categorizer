@@ -842,20 +842,49 @@ function expertCategorize(t: Transaction): Category {
 
 /**
  * Normalize merchant name for rule matching
- * Same logic as in learning-rules.ts
+ * Same logic as in learning-rules.ts - MUST stay in sync!
  */
 function normalizeMerchantForRules(description: string): string {
-  return description
-    .toLowerCase()
+  const lower = description.toLowerCase();
+
+  // Important context keywords that should ALWAYS be preserved for rule specificity
+  const contextKeywords = [
+    'payment', 'fee', 'membership', 'refund', 'return', 'charge',
+    'interest', 'annual', 'monthly', 'subscription', 'autopay',
+    'transfer', 'deposit', 'withdrawal', 'credit', 'debit',
+    'recurring', 'one-time', 'purchase', 'bill', 'invoice'
+  ];
+
+  // Clean up the description
+  let cleaned = lower
     .replace(/[#]\w+/g, '') // Remove #1234 order IDs
+    .replace(/\$[\d,.]+/g, '') // Remove dollar amounts
     .replace(/\d{2,}/g, '') // Remove long numbers
     .replace(/\b(inc|llc|ltd|corp|co|store|shop)\b/g, '') // Remove company suffixes
     .replace(/[^a-z\s]/g, '') // Keep only letters and spaces
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2) // Take first 2 words
-    .join(' ')
     .trim();
+
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+
+  if (words.length === 0) {
+    return description.toLowerCase().slice(0, 20);
+  }
+
+  // Check if any context keywords are present
+  const contextWords = words.filter(w => contextKeywords.includes(w));
+
+  // Strategy:
+  // - If context keywords exist, include them (e.g., "capital one payment")
+  // - Otherwise, take first 2 words (e.g., "starbucks")
+  if (contextWords.length > 0) {
+    // Take first 2-3 words for merchant + context keywords
+    const merchantWords = words.slice(0, 3);
+    const combined = [...new Set([...merchantWords, ...contextWords])];
+    return combined.slice(0, 4).join(' ').trim();
+  }
+
+  // No context keywords - simple merchant name
+  return words.slice(0, 2).join(' ').trim();
 }
 
 // calculateSummary moved to lib/summary.ts to avoid importing Anthropic SDK in browser
