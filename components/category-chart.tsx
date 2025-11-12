@@ -83,10 +83,10 @@ export default function CategoryChart({
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-[3fr_2fr] gap-8">
         {/* Pie Chart */}
         <div className="flex flex-col items-center">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
                 data={chartData}
@@ -96,7 +96,7 @@ export default function CategoryChart({
                 label={({ name, percentage }) =>
                   `${CATEGORY_ICONS[name as keyof typeof CATEGORY_ICONS]} ${percentage.toFixed(0)}%`
                 }
-                outerRadius={100}
+                outerRadius={130}
                 fill="#8884d8"
                 dataKey="value"
               >
