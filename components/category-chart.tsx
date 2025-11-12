@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { CategorySummary } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/constants';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector, Tooltip } from 'recharts';
 
 interface CategoryChartProps {
   summary: CategorySummary[];
@@ -13,6 +14,67 @@ interface CategoryChartProps {
   isCreditCard: boolean;
 }
 
+// Custom active shape for hover effect
+const renderActiveShape = (props: any) => {
+  const {
+    cx,
+    cy,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+  } = props;
+
+  return (
+    <g>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        style={{
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))',
+          transition: 'all 0.3s ease',
+        }}
+      />
+    </g>
+  );
+};
+
+// Custom tooltip
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl border border-gray-700">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">{CATEGORY_ICONS[data.name as keyof typeof CATEGORY_ICONS]}</span>
+          <span className="font-semibold">{data.name}</span>
+        </div>
+        <div className="text-sm space-y-1">
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-300">Amount:</span>
+            <span className="font-bold">${data.value.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-300">Percentage:</span>
+            <span className="font-bold">{data.percentage.toFixed(1)}%</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-300">Transactions:</span>
+            <span className="font-bold">{data.count}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function CategoryChart({
   summary,
   totalExpenses,
@@ -21,11 +83,37 @@ export default function CategoryChart({
   totalRefunds,
   isCreditCard,
 }: CategoryChartProps) {
-  const chartData = summary.map((item) => ({
-    name: item.category,
-    value: item.total,
-    percentage: item.percentage,
-  }));
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  // Filter out empty categories and prepare chart data
+  const chartData = summary
+    .filter((item) => item.count > 0 && item.total > 0 && item.percentage > 0)
+    .map((item) => ({
+      name: item.category,
+      value: item.total,
+      percentage: item.percentage,
+      count: item.count,
+    }));
+
+  // Get currently focused item (selected or hovered)
+  const focusedItem = selectedIndex !== null
+    ? chartData[selectedIndex]
+    : activeIndex !== null
+    ? chartData[activeIndex]
+    : null;
+
+  const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index);
+  };
+
+  const onPieLeave = () => {
+    setActiveIndex(null);
+  };
+
+  const onPieClick = (_: any, index: number) => {
+    setSelectedIndex(selectedIndex === index ? null : index);
+  };
 
   return (
     <div className="w-full bg-white rounded-xl shadow-lg p-8">
@@ -84,40 +172,107 @@ export default function CategoryChart({
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Pie Chart */}
+        {/* Modern Donut Chart with Center Stats */}
         <div className="flex flex-col items-center">
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percentage }) =>
-                  `${CATEGORY_ICONS[name as keyof typeof CATEGORY_ICONS]} ${percentage.toFixed(0)}%`
-                }
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {chartData.map((entry) => (
-                  <Cell
-                    key={`cell-${entry.name}`}
-                    fill={CATEGORY_COLORS[entry.name as keyof typeof CATEGORY_COLORS]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="relative w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <defs>
+                  {/* Create gradient definitions for each category */}
+                  {chartData.map((entry, index) => {
+                    const baseColor = CATEGORY_COLORS[entry.name as keyof typeof CATEGORY_COLORS];
+                    return (
+                      <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={baseColor} stopOpacity={1} />
+                        <stop offset="100%" stopColor={baseColor} stopOpacity={0.8} />
+                      </linearGradient>
+                    );
+                  })}
+                </defs>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  onMouseEnter={onPieEnter}
+                  onMouseLeave={onPieLeave}
+                  onClick={onPieClick}
+                  activeIndex={selectedIndex !== null ? selectedIndex : activeIndex !== null ? activeIndex : undefined}
+                  activeShape={renderActiveShape}
+                  animationBegin={0}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                  style={{ cursor: 'pointer' }}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${entry.name}`}
+                      fill={`url(#gradient-${index})`}
+                      stroke="white"
+                      strokeWidth={2}
+                      style={{
+                        opacity: activeIndex !== null && activeIndex !== index ? 0.6 : 1,
+                        transition: 'opacity 0.3s ease',
+                      }}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Center Stats - Changes based on hover/selection */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                {focusedItem ? (
+                  <div className="animate-in fade-in duration-200">
+                    <div className="text-3xl mb-1">
+                      {CATEGORY_ICONS[focusedItem.name as keyof typeof CATEGORY_ICONS]}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">
+                      ${focusedItem.value.toFixed(0)}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">
+                      {focusedItem.percentage.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {focusedItem.count} transaction{focusedItem.count !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Total Spending
+                    </div>
+                    <div className="text-3xl font-bold text-gray-800">
+                      ${totalExpenses.toFixed(0)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {chartData.length} categories
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Interaction Hint */}
+          <div className="text-xs text-gray-500 mt-4 text-center">
+            {selectedIndex !== null ? (
+              <span className="text-blue-600 font-medium">Click again to deselect</span>
+            ) : (
+              <span>Hover or click slices to explore</span>
+            )}
+          </div>
         </div>
 
         {/* Summary Stats - Different display for Credit Cards vs Bank Accounts */}
         <div className="flex flex-col gap-4">
           {/* Total Expenses/Spending - Always show */}
-          <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg group relative">
+          <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg group relative border border-red-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-red-700 font-semibold">
                 {isCreditCard ? 'Total Spending' : 'Total Expenses'}
@@ -143,7 +298,7 @@ export default function CategoryChart({
           {/* Credit Card: Show Payments and Refunds */}
           {isCreditCard ? (
             <>
-              <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg group relative">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg group relative border border-purple-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-purple-700 font-semibold">Total Payments</div>
                   <div className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -162,7 +317,7 @@ export default function CategoryChart({
               </div>
 
               {totalRefunds > 0 && (
-                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg group relative">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg group relative border border-green-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-green-700 font-semibold">Total Refunds</div>
                     <div className="text-green-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -181,7 +336,7 @@ export default function CategoryChart({
                 </div>
               )}
 
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg group relative">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg group relative border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-blue-700 font-semibold">Balance Change</div>
                   <div className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -202,7 +357,7 @@ export default function CategoryChart({
           ) : (
             /* Bank Account: Show Income and Net */
             <>
-              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg group relative">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg group relative border border-green-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-green-700 font-semibold">Total Income</div>
                   <div className="text-green-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -220,7 +375,7 @@ export default function CategoryChart({
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg group relative">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg group relative border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-blue-700 font-semibold">Net</div>
                   <div className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -245,15 +400,22 @@ export default function CategoryChart({
               <h3 className="text-sm font-semibold text-gray-700">Top Categories</h3>
             </div>
             <div className="space-y-2">
-              {summary.slice(0, 5).map((item) => (
+              {chartData.slice(0, 5).map((item, index) => (
                 <div
-                  key={item.category}
-                  className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  key={item.name}
+                  className={`flex items-center justify-between text-sm p-2 rounded-lg transition-all cursor-pointer ${
+                    selectedIndex === index
+                      ? 'bg-blue-50 border border-blue-200 shadow-sm'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => onPieClick(null, index)}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
                 >
                   <div className="flex items-center gap-2">
-                    <span>{CATEGORY_ICONS[item.category]}</span>
+                    <span className="text-lg">{CATEGORY_ICONS[item.name]}</span>
                     <div>
-                      <span className="text-gray-700 font-medium">{item.category}</span>
+                      <span className="text-gray-700 font-medium">{item.name}</span>
                       <span className="text-xs text-gray-500 ml-2">
                         ({item.count} transaction{item.count !== 1 ? 's' : ''})
                       </span>
@@ -261,7 +423,7 @@ export default function CategoryChart({
                   </div>
                   <div className="text-right">
                     <div className="font-semibold text-gray-900">
-                      ${item.total.toFixed(2)}
+                      ${item.value.toFixed(2)}
                     </div>
                     <div className="text-xs text-gray-500">
                       {item.percentage.toFixed(1)}%
