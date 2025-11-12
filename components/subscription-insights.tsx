@@ -73,9 +73,9 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Helper: Check if subscription is active (charged within last 60 days)
+  // Helper: Check if subscription is active (charged within last 45 days)
   const isActive = (sub: RecurringTransaction): boolean => {
-    return daysSinceLastCharge(sub.dates) <= 60;
+    return daysSinceLastCharge(sub.dates) <= 45;
   };
 
   // Separate active and inactive subscriptions
@@ -380,7 +380,7 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
               <div className="flex items-start gap-2">
                 <span className="text-xl">ℹ️</span>
                 <div className="text-sm text-blue-900">
-                  <strong>Active vs Inactive:</strong> Subscriptions are marked inactive if no charges in the last 60 days.
+                  <strong>Active vs Inactive:</strong> Subscriptions are marked inactive if no charges in the last 45 days.
                   This usually means you&apos;ve cancelled or paused the service.
                 </div>
               </div>
@@ -393,17 +393,6 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
                 <div className="text-sm text-purple-900">
                   <strong>About &quot;Next&quot; dates:</strong> Predicted based on your transaction history.
                   These dates are calculated from the last charge + average billing cycle. Only shown for active subscriptions.
-                </div>
-              </div>
-            </div>
-
-            {/* Action Tip */}
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <span className="text-xl">💡</span>
-                <div className="text-sm text-amber-900">
-                  <strong>Pro Tip:</strong> Review subscriptions you haven&apos;t used recently. Many people forget about trial subscriptions that auto-renewed.
-                  Check your email for renewal notices from these merchants.
                 </div>
               </div>
             </div>
