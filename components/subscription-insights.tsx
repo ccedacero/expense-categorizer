@@ -45,6 +45,8 @@ const GROUP_ICONS: Record<string, string> = {
 export default function SubscriptionInsights({ recurring }: SubscriptionInsightsProps) {
   const [viewMode, setViewMode] = useState<'list' | 'groups'>('list');
   const [showForgotten, setShowForgotten] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [showTips, setShowTips] = useState(false);
 
   if (recurring.recurring.length === 0) {
     return null;
@@ -62,18 +64,49 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Identify "forgotten" subscriptions (small charges that might be overlooked)
-  const forgottenSubs = recurring.recurring.filter(
+  // Helper: Calculate days since last charge
+  const daysSinceLastCharge = (dates: string[]): number => {
+    if (dates.length === 0) return 999;
+    const lastDate = new Date(dates[dates.length - 1]);
+    const today = new Date();
+    const diffTime = today.getTime() - lastDate.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Helper: Check if subscription is active (charged within last 60 days)
+  const isActive = (sub: RecurringTransaction): boolean => {
+    return daysSinceLastCharge(sub.dates) <= 60;
+  };
+
+  // Separate active and inactive subscriptions
+  const activeSubscriptions = recurring.recurring.filter(isActive);
+  const inactiveSubscriptions = recurring.recurring.filter(sub => !isActive(sub));
+
+  // Identify "forgotten" subscriptions (small charges that might be overlooked) - ONLY from active subs
+  const forgottenSubs = activeSubscriptions.filter(
     r => r.averageAmount < 15 && r.frequency === 'monthly'
   );
 
   // Calculate potential savings from forgotten subscriptions
   const potentialSavings = forgottenSubs.reduce((sum, r) => sum + r.averageAmount * 12, 0);
 
-  // Get subscriptions to spotlight (worth reviewing)
-  const spotlightSubs = recurring.recurring
-    .filter(r => r.confidence < 0.85 || r.averageAmount < 10)
-    .slice(0, 3);
+  // Get subscriptions to spotlight (worth reviewing) - ONLY from active subs, and ONLY if 3+
+  const spotlightCandidates = activeSubscriptions.filter(
+    r => r.confidence < 0.85 || r.averageAmount < 10
+  );
+  const spotlightSubs = spotlightCandidates.length >= 3 ? spotlightCandidates.slice(0, 3) : [];
+
+  // Recalculate totals for active subscriptions only
+  const activeTotalMonthly = activeSubscriptions
+    .filter(r => r.frequency === 'monthly')
+    .reduce((sum, r) => sum + r.averageAmount, 0);
+
+  const activeTotalAnnual = activeSubscriptions.reduce((sum, r) => {
+    if (r.frequency === 'monthly') return sum + r.averageAmount * 12;
+    if (r.frequency === 'annual') return sum + r.averageAmount;
+    if (r.frequency === 'quarterly') return sum + r.averageAmount * 4;
+    return sum;
+  }, 0);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8">
@@ -86,7 +119,8 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
               Subscription Dashboard
             </h2>
             <p className="text-gray-600 text-sm">
-              Found {recurring.recurring.length} recurring charge{recurring.recurring.length !== 1 ? 's' : ''} in your transactions
+              {activeSubscriptions.length} active • {inactiveSubscriptions.length} inactive
+              {inactiveSubscriptions.length > 0 && ' (cancelled/paused)'}
             </p>
           </div>
         </div>
@@ -120,20 +154,20 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
           <div className="text-blue-600 text-sm font-semibold mb-1">Monthly Total</div>
           <div className="text-2xl font-bold text-blue-900">
-            {formatCurrency(recurring.totalMonthlySpend)}
+            {formatCurrency(activeTotalMonthly)}
           </div>
           <div className="text-blue-600 text-xs mt-1">
-            {recurring.recurring.filter(r => r.frequency === 'monthly').length} subscription{recurring.recurring.filter(r => r.frequency === 'monthly').length !== 1 ? 's' : ''}
+            {activeSubscriptions.filter(r => r.frequency === 'monthly').length} active subscription{activeSubscriptions.filter(r => r.frequency === 'monthly').length !== 1 ? 's' : ''}
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
           <div className="text-purple-600 text-sm font-semibold mb-1">Annual Impact</div>
           <div className="text-2xl font-bold text-purple-900">
-            {formatCurrency(recurring.totalAnnualSpend)}
+            {formatCurrency(activeTotalAnnual)}
           </div>
           <div className="text-purple-600 text-xs mt-1">
-            All recurring charges
+            Active subscriptions only
           </div>
         </div>
 
@@ -243,13 +277,50 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
 
       {/* Main Subscription List/Groups */}
       {viewMode === 'list' ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-            All Subscriptions ({recurring.recurring.length})
-          </h3>
-          {recurring.recurring.map((sub, index) => (
-            <SubscriptionCard key={`${sub.merchant}-${index}`} sub={sub} formatCurrency={formatCurrency} formatDate={formatDate} />
-          ))}
+        <div className="space-y-6">
+          {/* Active Subscriptions */}
+          {activeSubscriptions.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                Active Subscriptions ({activeSubscriptions.length})
+              </h3>
+              {activeSubscriptions.map((sub, index) => (
+                <SubscriptionCard
+                  key={`active-${sub.merchant}-${index}`}
+                  sub={sub}
+                  isActive={true}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Inactive Subscriptions (Collapsible) */}
+          {inactiveSubscriptions.length > 0 && (
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowInactive(!showInactive)}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 uppercase tracking-wide"
+              >
+                <span>Inactive Subscriptions ({inactiveSubscriptions.length})</span>
+                <span className="text-xs">{showInactive ? '▲' : '▼'}</span>
+              </button>
+              {showInactive && (
+                <div className="space-y-2 mt-2">
+                  {inactiveSubscriptions.map((sub, index) => (
+                    <SubscriptionCard
+                      key={`inactive-${sub.merchant}-${index}`}
+                      sub={sub}
+                      isActive={false}
+                      formatCurrency={formatCurrency}
+                      formatDate={formatDate}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -268,7 +339,7 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
               </div>
               <div className="space-y-2">
                 {group.subscriptions.map((sub, subIndex) => (
-                  <SubscriptionCard key={`${group.groupName}-${subIndex}`} sub={sub} formatCurrency={formatCurrency} formatDate={formatDate} />
+                  <SubscriptionCard key={`${group.groupName}-${subIndex}`} sub={sub} isActive={isActive(sub)} formatCurrency={formatCurrency} formatDate={formatDate} />
                 ))}
               </div>
             </div>
@@ -276,42 +347,68 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
         </div>
       )}
 
-      {/* Helpful Tips */}
-      <div className="mt-8 space-y-3">
-        {/* Savings Tip */}
-        {potentialSavings > 100 && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <span className="text-xl">💰</span>
-              <div className="text-sm text-green-900">
-                <strong>Potential Savings:</strong> Canceling just {forgottenSubs.length} small subscription{forgottenSubs.length !== 1 ? 's' : ''} could save you{' '}
-                <strong>{formatCurrency(potentialSavings)}</strong> per year!
+      {/* Helpful Tips (Collapsible) */}
+      <div className="mt-8">
+        <button
+          onClick={() => setShowTips(!showTips)}
+          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">💡</span>
+            <span className="font-semibold text-gray-800">Quick Tips & FAQs</span>
+          </div>
+          <span className="text-gray-600">{showTips ? '▲' : '▼'}</span>
+        </button>
+
+        {showTips && (
+          <div className="mt-3 space-y-3">
+            {/* Savings Tip */}
+            {potentialSavings > 100 && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <span className="text-xl">💰</span>
+                  <div className="text-sm text-green-900">
+                    <strong>Potential Savings:</strong> Canceling just {forgottenSubs.length} small subscription{forgottenSubs.length !== 1 ? 's' : ''} could save you{' '}
+                    <strong>{formatCurrency(potentialSavings)}</strong> per year!
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Active/Inactive Explanation */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-xl">ℹ️</span>
+                <div className="text-sm text-blue-900">
+                  <strong>Active vs Inactive:</strong> Subscriptions are marked inactive if no charges in the last 60 days.
+                  This usually means you&apos;ve cancelled or paused the service.
+                </div>
+              </div>
+            </div>
+
+            {/* Next Date Explanation */}
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📅</span>
+                <div className="text-sm text-purple-900">
+                  <strong>About &quot;Next&quot; dates:</strong> Predicted based on your transaction history.
+                  These dates are calculated from the last charge + average billing cycle. Only shown for active subscriptions.
+                </div>
+              </div>
+            </div>
+
+            {/* Action Tip */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-xl">💡</span>
+                <div className="text-sm text-amber-900">
+                  <strong>Pro Tip:</strong> Review subscriptions you haven&apos;t used recently. Many people forget about trial subscriptions that auto-renewed.
+                  Check your email for renewal notices from these merchants.
+                </div>
               </div>
             </div>
           </div>
         )}
-
-        {/* Next Date Explanation */}
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <span className="text-xl">📅</span>
-            <div className="text-sm text-purple-900">
-              <strong>About &quot;Next&quot; dates:</strong> Predicted based on your transaction history.
-              These dates are calculated from the last charge + average billing cycle.
-            </div>
-          </div>
-        </div>
-
-        {/* Action Tip */}
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <span className="text-xl">💡</span>
-            <div className="text-sm text-blue-900">
-              <strong>Pro Tip:</strong> Review subscriptions you haven&apos;t used recently. Many people forget about trial subscriptions that auto-renewed.
-              Check your email for renewal notices from these merchants.
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -320,27 +417,48 @@ export default function SubscriptionInsights({ recurring }: SubscriptionInsights
 // Subscription Card Component
 function SubscriptionCard({
   sub,
+  isActive,
   formatCurrency,
   formatDate,
 }: {
   sub: RecurringTransaction;
+  isActive: boolean;
   formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
 }) {
+  // Calculate days since last charge for display
+  const lastDate = new Date(sub.dates[sub.dates.length - 1]);
+  const today = new Date();
+  const daysSince = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
   return (
-    <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-all border border-gray-200">
+    <div className={`flex items-center justify-between p-3 rounded-lg hover:shadow-md transition-all border ${
+      isActive
+        ? 'bg-white border-gray-200'
+        : 'bg-gray-50 border-gray-300 opacity-75'
+    }`}>
       <div className="flex items-center gap-3">
         <div className="text-xl">
           {FREQUENCY_ICONS[sub.frequency]}
         </div>
         <div>
-          <div className="font-medium text-gray-800">
-            {sub.merchant}
+          <div className="flex items-center gap-2">
+            <div className="font-medium text-gray-800">
+              {sub.merchant}
+            </div>
+            {!isActive && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded">
+                Inactive
+              </span>
+            )}
           </div>
           <div className="text-sm text-gray-600">
             {FREQUENCY_LABELS[sub.frequency]} • {sub.occurrences} charge{sub.occurrences !== 1 ? 's' : ''}
-            {sub.nextExpectedDate && (
+            {isActive && sub.nextExpectedDate && (
               <> • Next: {formatDate(sub.nextExpectedDate)}</>
+            )}
+            {!isActive && (
+              <> • Last: {formatDate(sub.dates[sub.dates.length - 1])} ({daysSince} days ago)</>
             )}
           </div>
         </div>
