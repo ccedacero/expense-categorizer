@@ -338,18 +338,23 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
           {sortedTransactions.map((transaction, sortedIndex) => {
             const originalIndex = indexMap[sortedIndex];
             return (
-              <tr key={originalIndex} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+              <tr
+                key={originalIndex}
+                className={`hover:bg-blue-50/50 transition-colors ${
+                  sortedIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                }`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                   {new Date(transaction.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {transaction.description}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                   <span
-                    className={
+                    className={`font-mono font-semibold ${
                       transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
-                    }
+                    }`}
                   >
                     ${Math.abs(transaction.amount).toFixed(2)}
                   </span>
@@ -359,7 +364,7 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
                     <select
                       value={transaction.category}
                       onChange={(e) => handleCategoryChange(originalIndex, e.target.value as Category)}
-                      className="appearance-none cursor-pointer px-3 py-1.5 pr-9 rounded-full text-white font-medium border-2 border-transparent hover:border-white/40 hover:shadow-md focus:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                      className="appearance-none cursor-pointer px-3 py-1.5 pr-9 rounded-full text-white font-medium border-2 border-transparent hover:border-white/40 hover:shadow-lg hover:scale-105 focus:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all shadow-sm ring-1 ring-black/5"
                       style={{
                         backgroundColor: CATEGORY_COLORS[transaction.category],
                       }}
@@ -457,30 +462,37 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
 
       {/* Empty State */}
       {filteredCount === 0 && (
-        <div className="py-12 text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <h3 className="mt-4 text-sm font-medium text-gray-900">No transactions found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Try adjusting your search query
+        <div className="py-16 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <svg
+              className="h-8 w-8 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">No transactions found</h3>
+          <p className="text-sm text-gray-500 mb-6">
+            {searchQuery
+              ? `No results match "${searchQuery.length > 30 ? searchQuery.substring(0, 30) + '...' : searchQuery}"`
+              : 'Try adjusting your search query'}
           </p>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Clear search
             </button>
           )}

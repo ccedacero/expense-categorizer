@@ -9,6 +9,7 @@ import ExportButtons from '@/components/export-buttons';
 import SubscriptionInsights from '@/components/subscription-insights';
 import CategoryFilter from '@/components/category-filter';
 import RulesBadge from '@/components/rules-badge';
+import LoadingSkeleton from '@/components/loading-skeleton';
 import { CategorizationResult, Category, CategorizedTransaction } from '@/lib/types';
 import { calculateSummary } from '@/lib/summary';
 
@@ -250,7 +251,10 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {!result ? (
+        {isProcessing ? (
+          // Loading skeleton while processing
+          <LoadingSkeleton />
+        ) : !result ? (
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -264,23 +268,6 @@ export default function Home() {
             </div>
 
             <UploadZone onDataSubmit={handleDataSubmit} isProcessing={isProcessing} />
-
-            {/* Loading State with Progress */}
-            {isProcessing && transactionCount > 0 && (
-              <div className="max-w-4xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex items-center gap-3">
-                  <div className="animate-spin text-2xl">⚙️</div>
-                  <div>
-                    <div className="font-semibold text-blue-900">
-                      Categorizing {transactionCount} transactions...
-                    </div>
-                    <div className="text-sm text-blue-700">
-                      Typically takes 2-5 seconds • Using AI + smart caching
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Error Display with Suggestion */}
             {error && (
