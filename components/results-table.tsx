@@ -35,6 +35,14 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+
+      // Track search usage (privacy-safe - no actual query terms)
+      if (searchQuery.trim()) {
+        track('search_used', {
+          queryLength: searchQuery.trim().length,
+          hasResults: true, // We'll update this after filtering
+        });
+      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -44,6 +52,33 @@ export default function ResultsTable({ transactions, onCategoryChange }: Results
     localStorage.setItem('rulesTipDismissed', 'true');
     setShowRulesTip(false);
   };
+
+  // Track search results after filtering
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      // Calculate filtered count (this will be recalculated in useMemo below)
+      const query = debouncedSearchQuery.toLowerCase().trim();
+      const filtered = transactions.filter((transaction) => {
+        const description = transaction.description.toLowerCase();
+        const category = transaction.category.toLowerCase();
+        const amount = Math.abs(transaction.amount).toFixed(2);
+        const date = new Date(transaction.date).toLocaleDateString().toLowerCase();
+        return (
+          description.includes(query) ||
+          category.includes(query) ||
+          amount.includes(query) ||
+          date.includes(query)
+        );
+      });
+
+      track('search_results', {
+        totalTransactions: transactions.length,
+        filteredCount: filtered.length,
+        hasResults: filtered.length > 0,
+        filterPercentage: Math.round((filtered.length / transactions.length) * 100),
+      });
+    }
+  }, [debouncedSearchQuery, transactions]);
 
   const handleCategoryChange = (index: number, newCategory: Category) => {
     const transaction = transactions[index];

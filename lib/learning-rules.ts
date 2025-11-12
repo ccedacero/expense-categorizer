@@ -9,6 +9,15 @@
 
 import { Category } from './types';
 
+// Import Vercel Analytics for tracking rule operations
+// Only import on client-side to avoid server-side errors
+let trackFunction: ((eventName: string, eventData?: Record<string, any>) => void) | null = null;
+if (typeof window !== 'undefined') {
+  import('@vercel/analytics').then((module) => {
+    trackFunction = module.track;
+  });
+}
+
 export interface CategoryRule {
   id: string;
   merchantPattern: string; // Normalized merchant name pattern
@@ -151,6 +160,15 @@ export function createOrUpdateRule(
     rules[existingRuleIndex] = updatedRule;
     saveRules(rules);
 
+    // Track rule update
+    if (trackFunction) {
+      trackFunction('rule_updated', {
+        category: newCategory,
+        appliedCount: updatedRule.appliedCount,
+        totalRules: rules.length,
+      });
+    }
+
     return { isNewRule: false, rule: updatedRule };
   }
 
@@ -167,6 +185,15 @@ export function createOrUpdateRule(
 
   rules.push(newRule);
   saveRules(rules);
+
+  // Track rule creation
+  if (trackFunction) {
+    trackFunction('rule_created', {
+      category: newCategory,
+      totalRules: rules.length,
+      patternLength: merchantPattern.length,
+    });
+  }
 
   return { isNewRule: true, rule: newRule };
 }
@@ -213,6 +240,7 @@ export function applyRules(merchantDescription: string): {
  */
 export function deleteRule(ruleId: string): boolean {
   const rules = getRules();
+  const ruleToDelete = rules.find((r) => r.id === ruleId);
   const filteredRules = rules.filter((r) => r.id !== ruleId);
 
   if (filteredRules.length === rules.length) {
@@ -220,6 +248,16 @@ export function deleteRule(ruleId: string): boolean {
   }
 
   saveRules(filteredRules);
+
+  // Track rule deletion
+  if (trackFunction && ruleToDelete) {
+    trackFunction('rule_deleted', {
+      category: ruleToDelete.category,
+      appliedCount: ruleToDelete.appliedCount,
+      remainingRules: filteredRules.length,
+    });
+  }
+
   return true;
 }
 
@@ -228,7 +266,18 @@ export function deleteRule(ruleId: string): boolean {
  */
 export function clearAllRules(): void {
   if (typeof window === 'undefined') return;
+
+  const rules = getRules();
+  const ruleCount = rules.length;
+
   localStorage.removeItem(RULES_STORAGE_KEY);
+
+  // Track bulk rule deletion
+  if (trackFunction && ruleCount > 0) {
+    trackFunction('rules_cleared', {
+      clearedCount: ruleCount,
+    });
+  }
 }
 
 /**

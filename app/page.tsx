@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { track } from '@vercel/analytics';
 import UploadZone from '@/components/upload-zone';
 import ResultsTable from '@/components/results-table';
 import CategoryChart from '@/components/category-chart';
@@ -64,6 +65,26 @@ export default function Home() {
       }
 
       setResult(data);
+
+      // Track successful file upload and categorization
+      track('file_uploaded', {
+        transactionCount: data.transactions?.length || 0,
+        hasRecurring: data.recurring?.subscriptions?.length > 0 || false,
+        parseErrors: data.parseErrors?.length || 0,
+      });
+
+      // Track category distribution (top 3 categories)
+      if (data.topCategories && data.topCategories.length > 0) {
+        track('category_distribution', {
+          topCategory: data.topCategories[0]?.category,
+          topCategoryPercentage: data.topCategories[0]?.percentage,
+          secondCategory: data.topCategories[1]?.category,
+          secondCategoryPercentage: data.topCategories[1]?.percentage,
+          thirdCategory: data.topCategories[2]?.category,
+          thirdCategoryPercentage: data.topCategories[2]?.percentage,
+          totalCategories: Object.keys(data.summary || {}).length,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error occurred');
       setErrorSuggestion('Please check your internet connection and try again.');

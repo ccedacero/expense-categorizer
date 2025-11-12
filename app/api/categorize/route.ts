@@ -157,12 +157,32 @@ export async function POST(request: NextRequest) {
     const avgConfidence = result.transactions.reduce((sum, t) => sum + (t.confidence || 0), 0) / result.transactions.length;
     trackCategorizationConfidence(avgConfidence, result.transactions.length);
 
+    // Calculate category distribution for analytics
+    const categoryDistribution = result.transactions.reduce((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Sort categories by frequency and get top 3
+    const sortedCategories = Object.entries(categoryDistribution)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    // Track category distribution as analytics event
+    // This helps understand spending patterns across users
+    const topCategories = sortedCategories.map(([cat, count]) => ({
+      category: cat,
+      count,
+      percentage: Math.round((count / result.transactions.length) * 100),
+    }));
+
     return NextResponse.json(
       {
         success: true,
         ...result,
         recurring: recurringAnalysis, // Add recurring transaction analysis
         parseErrors: parseResult.errors, // Include any parse warnings
+        topCategories, // Include top 3 categories for client-side analytics tracking
       },
       {
         headers: {
