@@ -1,25 +1,32 @@
 /**
  * Transaction Parser
  *
- * Parses CSV and plain text into transaction objects.
- * Handles multiple formats:
+ * Parses multiple file formats into transaction objects:
  * - CSV with headers (Date, Description, Amount)
  * - CSV without headers
  * - Plain text (tab/comma separated)
  * - Copy-pasted bank statements
+ * - Excel files (.xlsx, .xls)
+ * - OFX/QFX files (.ofx, .qfx)
  */
 
 import Papa from 'papaparse';
 import { Transaction, ParseResult, CSVFormat } from './types';
+import { parseOFX, isValidOFXFile } from './parsers/ofx-parser';
 
 /**
- * Main parser function
+ * Main parser function for text input (CSV, OFX, or plain text)
  */
 export function parseTransactions(input: string): ParseResult {
   const trimmed = input.trim();
 
   if (!trimmed) {
     return { transactions: [], errors: ['Input is empty'] };
+  }
+
+  // Check if this is an OFX/QFX file
+  if (isValidOFXFile(trimmed)) {
+    return parseOFX(trimmed);
   }
 
   // Try parsing as CSV first
@@ -30,6 +37,52 @@ export function parseTransactions(input: string): ParseResult {
 
   // Fall back to plain text parsing
   return parsePlainText(trimmed);
+}
+
+/**
+ * Parser for binary file formats (Excel)
+ * This should be called from the client when handling file uploads
+ */
+export function parseTransactionsFromFile(
+  fileContent: ArrayBuffer | string,
+  fileName: string
+): ParseResult {
+  const extension = fileName.toLowerCase().split('.').pop();
+
+  // Handle Excel files
+  if (extension === 'xlsx' || extension === 'xls') {
+    if (typeof fileContent === 'string') {
+      return {
+        transactions: [],
+        errors: ['Excel files must be uploaded as binary, not text'],
+      };
+    }
+
+    // Import dynamically to avoid bundling xlsx in API routes
+    const { parseXLSX } = require('./parsers/xlsx-parser');
+    const xlsxResult = parseXLSX(fileContent);
+
+    // If Excel parser returned rawCSV, parse that as CSV
+    if (xlsxResult.rawCSV) {
+      const csvResult = parseTransactions(xlsxResult.rawCSV);
+      return {
+        ...csvResult,
+        format: 'excel',
+      };
+    }
+
+    return xlsxResult;
+  }
+
+  // Handle text-based files (CSV, OFX, plain text)
+  if (typeof fileContent === 'string') {
+    return parseTransactions(fileContent);
+  }
+
+  // Convert ArrayBuffer to string for text files
+  const decoder = new TextDecoder('utf-8');
+  const text = decoder.decode(fileContent);
+  return parseTransactions(text);
 }
 
 /**

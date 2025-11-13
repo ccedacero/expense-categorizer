@@ -81,6 +81,8 @@ export type CSVFormat =
   | 'capital-one'
   | 'generic-csv'
   | 'plain-text'
+  | 'excel'  // .xlsx, .xls
+  | 'ofx'    // .ofx, .qfx
   | 'unknown';
 
 export interface ParseResult {
@@ -88,4 +90,5 @@ export interface ParseResult {
   errors: string[];
   format?: CSVFormat; // Detected CSV format/bank type
   hasCategories?: boolean; // Whether CSV included category column
+  rawCSV?: string; // For Excel files: converted CSV string to be parsed
 }
