@@ -99,10 +99,10 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
         <div className="flex flex-col items-center gap-4">
           <div className="text-5xl">📊</div>
           <h2 className="text-xl font-semibold text-gray-800">
-            Upload or paste your transactions
+            Try with Your Bank CSV
           </h2>
           <p className="text-gray-600 text-center max-w-md">
-            Supports CSV exports from all banks (Chase, Capital One, Wells Fargo, Bank of America, etc.)
+            Works with Chase, Capital One, Wells Fargo, Bank of America, and any bank with CSV export
           </p>
 
           {/* Hidden file input */}
@@ -144,7 +144,7 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             disabled={!input.trim() || isProcessing}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
           >
-            {isProcessing ? '✨ Categorizing...' : '✨ Categorize with AI - Free & Private'}
+            {isProcessing ? '✨ Categorizing Your Transactions...' : '✨ Categorize My Transactions - Free'}
           </button>
         </div>
       </div>
