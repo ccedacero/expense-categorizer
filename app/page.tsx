@@ -344,8 +344,8 @@ export default function Home() {
                   <div className="text-xs text-gray-600">Accuracy Rate</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">$0.50</div>
-                  <div className="text-xs text-gray-600">Per 1,000 transactions</div>
+                  <div className="text-2xl font-bold text-blue-600">Free</div>
+                  <div className="text-xs text-gray-600">Bring your own API key</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-blue-600">0</div>
@@ -378,7 +378,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Export CSV from your bank</h3>
-                    <p className="text-sm text-gray-600">Works with Chase, Capital One, Wells Fargo, Bank of America, and 50+ other banks</p>
+                    <p className="text-sm text-gray-600">Works with Chase, Capital One, Wells Fargo, Bank of America, and any bank that exports CSV</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -518,7 +518,7 @@ export default function Home() {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-2 text-lg">Which banks are supported?</h3>
               <p className="text-gray-600 text-sm">
-                We support CSV exports from 50+ banks including Chase, Capital One, Wells Fargo, Bank of America, Citibank, Discover, and more. If your bank can export to CSV format, it will work with our categorizer.
+                We support CSV exports from all major banks including Chase, Capital One, Wells Fargo, Bank of America, Citibank, Discover, and more. If your bank can export transactions to CSV format, it will work with our categorizer.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -530,7 +530,7 @@ export default function Home() {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-2 text-lg">How much does it cost?</h3>
               <p className="text-gray-600 text-sm">
-                It&apos;s free to start! New Anthropic users get $5 in free credits. After that, it costs approximately $0.50 per 1,000 transactions thanks to our smart caching system that reduces AI costs by 50-80%.
+                It&apos;s free to use! You&apos;ll need your own Anthropic API key, which costs approximately $0.50 per 1,000 transactions. New Anthropic users get $5 in free credits to start. Our smart caching system reduces AI costs by 50-80%.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">

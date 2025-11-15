@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: "AI Expense Categorizer - Categorize Bank Statements in 30 Seconds",
     template: "%s | AI Expense Categorizer",
   },
-  description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy. Privacy-first (zero data storage). Works with Chase, Capital One, Wells Fargo, and 50+ banks. Export to QuickBooks, Xero. $0.50 per 1,000 transactions.",
+  description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy. Privacy-first (zero data storage). Works with Chase, Capital One, Wells Fargo, and any bank that exports CSV. Export to QuickBooks, Xero.",
   keywords: [
     "expense categorizer",
     "transaction categorizer",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     title: "AI Expense Categorizer - Categorize Bank Statements in 30 Seconds",
-    description: "Stop manually categorizing transactions. Free AI-powered expense categorizer with 95% accuracy, zero data storage. Works with Chase, Capital One, Wells Fargo, and 50+ banks.",
+    description: "Stop manually categorizing transactions. Free AI-powered expense categorizer with 95% accuracy, zero data storage. Works with Chase, Capital One, Wells Fargo, and any bank with CSV export.",
     siteName: "AI Expense Categorizer",
     images: [
       {
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AI Expense Categorizer - Categorize Bank Statements in 30 Seconds",
-    description: "Stop manually categorizing transactions. Free AI expense categorizer with 95% accuracy, zero data storage. Works with 50+ banks.",
+    description: "Stop manually categorizing transactions. Free AI expense categorizer with 95% accuracy, zero data storage. Works with major banks.",
     images: [`${siteUrl}/og-image.png`],
     creator: "@expense_ai",
   },
@@ -93,13 +93,13 @@ export default function RootLayout({
       priceCurrency: "USD",
       description: "Free to start, pay-as-you-go at $0.50 per 1,000 transactions",
     },
-    description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy and zero data storage. Works with Chase, Capital One, Wells Fargo, and 50+ banks.",
+    description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy and zero data storage. Works with Chase, Capital One, Wells Fargo, and any bank that exports CSV.",
     featureList: [
       "Categorize bank statements in 30 seconds",
       "95% accuracy for Chase, Capital One, and major banks",
       "Privacy-first - zero data storage",
       "Learning rules engine that remembers your preferences",
-      "Supports CSV from 50+ banks",
+      "Supports CSV from all major banks",
       "Export to QuickBooks, Xero, Wave",
       "Subscription and recurring transaction detection",
       "Real-time processing - no account required",

@@ -102,7 +102,7 @@ export default function UploadZone({ onDataSubmit, isProcessing }: UploadZonePro
             Try with Your Bank CSV
           </h2>
           <p className="text-gray-600 text-center max-w-md">
-            Works with Chase, Capital One, Wells Fargo, Bank of America, and 50+ other banks
+            Works with Chase, Capital One, Wells Fargo, Bank of America, and any bank with CSV export
           </p>
 
           {/* Hidden file input */}
