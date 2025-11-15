@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: "AI Expense Categorizer - Categorize Bank Statements in 30 Seconds",
     template: "%s | AI Expense Categorizer",
   },
-  description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy. Privacy-first (zero data storage). Works with Chase, Capital One, Wells Fargo, and any bank that exports CSV. Export to QuickBooks, Xero.",
+  description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy. Privacy-first (zero data storage). Works with Chase, Capital One, Wells Fargo, and any bank that exports CSV. Download results as CSV.",
   keywords: [
     "expense categorizer",
     "transaction categorizer",
@@ -91,7 +91,7 @@ export default function RootLayout({
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-      description: "Free to start, pay-as-you-go at $0.50 per 1,000 transactions",
+      description: "Free to use - no signup or API key required",
     },
     description: "Stop manually categorizing bank transactions. Free AI-powered expense categorizer with 95% accuracy and zero data storage. Works with Chase, Capital One, Wells Fargo, and any bank that exports CSV.",
     featureList: [
@@ -100,7 +100,7 @@ export default function RootLayout({
       "Privacy-first - zero data storage",
       "Learning rules engine that remembers your preferences",
       "Supports CSV from all major banks",
-      "Export to QuickBooks, Xero, Wave",
+      "Export categorized transactions as CSV",
       "Subscription and recurring transaction detection",
       "Real-time processing - no account required",
     ],

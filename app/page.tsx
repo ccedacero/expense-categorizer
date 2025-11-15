@@ -328,7 +328,7 @@ export default function Home() {
                 <div className="text-3xl mb-3">🔒</div>
                 <h3 className="font-semibold text-gray-800 mb-2 text-lg">Bank-Level Privacy</h3>
                 <p className="text-gray-600 text-sm">
-                  Zero data storage. No account required. Your financial data never leaves your browser.
+                  Zero data storage. No account required. Your data is processed in real-time and immediately discarded.
                 </p>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-blue-600">Free</div>
-                  <div className="text-xs text-gray-600">Bring your own API key</div>
+                  <div className="text-xs text-gray-600">No signup or API key needed</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-blue-600">0</div>
@@ -396,7 +396,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Review, adjust, and export</h3>
-                    <p className="text-sm text-gray-600">Export to QuickBooks, Xero, or CSV for your budget spreadsheet</p>
+                    <p className="text-sm text-gray-600">Download as CSV for use with Excel, QuickBooks, Xero, or any budgeting tool</p>
                   </div>
                 </div>
               </div>
@@ -530,13 +530,13 @@ export default function Home() {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-2 text-lg">How much does it cost?</h3>
               <p className="text-gray-600 text-sm">
-                It&apos;s free to use! You&apos;ll need your own Anthropic API key, which costs approximately $0.50 per 1,000 transactions. New Anthropic users get $5 in free credits to start. Our smart caching system reduces AI costs by 50-80%.
+                It&apos;s completely free to use! No signup, no API key required. We cover the AI costs for now to keep the tool accessible. For high-volume users or those who want to self-host, you can run it locally with your own Anthropic API key (approximately $0.50 per 1,000 transactions).
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="font-semibold text-gray-800 mb-2 text-lg">Can I export to QuickBooks or Xero?</h3>
+              <h3 className="font-semibold text-gray-800 mb-2 text-lg">Can I export the results?</h3>
               <p className="text-gray-600 text-sm">
-                Yes! After categorization, you can export your transactions as CSV in a format compatible with QuickBooks, Xero, Wave, and other accounting software.
+                Yes! You can download your categorized transactions as a CSV file. The CSV format works with QuickBooks, Xero, Wave, Excel, Google Sheets, and most accounting/budgeting software.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm">
